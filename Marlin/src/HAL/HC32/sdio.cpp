@@ -26,6 +26,7 @@
 #include <gpio/gpio.h>
 #include <sd_card.h>
 
+#if ENABLED(ONBOARD_SDIO)
 //
 // SDIO configuration
 //
@@ -142,5 +143,5 @@ uint32_t SDIO_GetCardSize() {
   // If the card is bigger than ~4Gb (maximum a 32bit integer can hold), clamp to the maximum value of a 32 bit integer
   return _MAX(cardSizeBytes, UINT32_MAX);
 }
-
+#endif  //ONBOARD_SDIO
 #endif // ARDUINO_ARCH_HC32
