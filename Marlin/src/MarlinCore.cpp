@@ -1138,7 +1138,7 @@ inline void tmc_standby_setup() {
  *  - Set Marlin to RUNNING State
  */
 void setup() {
-  #if defined(HC32F460xx)
+  #if MB(ESP32_HC_V1_5)
   PORT_Unlock();
   M4_PORT->PCCR   = 0XC000u;
   PORT_Lock();
@@ -1170,7 +1170,7 @@ void setup() {
   #endif
   #define SETUP_RUN(C) do{ SETUP_LOG(STRINGIFY(C)); C; }while(0)
 
-  #if defined(HC32F460xx)
+  #if MB(ESP32_HC_V1_5)
   stc_port_init_t Tx_pstcPortInit = {
     .enPinMode = Pin_Mode_Out,
     .enLatch = Disable,        
