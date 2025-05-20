@@ -939,7 +939,12 @@
   #include "hc32f4/pins_AQUILA_101.h"               // HC32F460                             env:HC32F460C_aquila_101
 #elif MB(CREALITY_ENDER2P_V24S4)
   #include "hc32f4/pins_CREALITY_ENDER2P_V24S4.h"   // HC32F460                             env:HC32F460C_e2p24s4
-
+#elif MB(ESP32_HC_V4_0)
+  #include "hc32f4/pins_ESP32_HC_V4_0.h"            // HC32F460                             env:HC32F460C_ASD_HC_V4_0
+#elif MB(ESP32_HC_V1_5)
+  #include "hc32f4/pins_ESP32_HC_V1_5.h"            // HC32F460                             env:HC32F460C_ASD_HC_V1_5  
+#elif MB(ESP32_HC_V4_1)
+  #include "hc32f4/pins_ESP32_HC_V4_1.h"            // HC32F460                             env:HC32F460C_ASD_HC_V4_1  
 //
 // Raspberry Pi RP2040
 //

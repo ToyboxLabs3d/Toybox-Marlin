@@ -535,6 +535,9 @@
 #define BOARD_AQUILA_V101             7200  // Voxelab Aquila V1.0.0/V1.0.1/V1.0.2/V1.0.3 as found in the Voxelab Aquila X2 and C2
 #define BOARD_CREALITY_ENDER2P_V24S4  7201  // Creality Ender 2 Pro v2.4.S4_170 (HC32f460kcta)
 
+#define BOARD_ESP32_HC_V4_0           7202  // ASD mainboard (HC32f460kcta)
+#define BOARD_ESP32_HC_V1_5           7203  // ASD ESP-HC V1.5 mainboard (HC32f460kcta)
+#define BOARD_ESP32_HC_V4_1           7204  // ASD mainboard (HC32f460kcta)
 //
 // Raspberry Pi
 //

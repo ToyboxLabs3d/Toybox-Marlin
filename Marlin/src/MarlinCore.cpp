@@ -1138,6 +1138,12 @@ inline void tmc_standby_setup() {
  *  - Set Marlin to RUNNING State
  */
 void setup() {
+  #if defined(HC32F460xx)
+  PORT_Unlock();
+  M4_PORT->PCCR   = 0XC000u;
+  PORT_Lock();
+  #endif
+
   #ifdef FASTIO_INIT
     FASTIO_INIT();
   #endif
@@ -1163,6 +1169,20 @@ void setup() {
     #define SETUP_LOG(...) NOOP
   #endif
   #define SETUP_RUN(C) do{ SETUP_LOG(STRINGIFY(C)); C; }while(0)
+
+  #if defined(HC32F460xx)
+  stc_port_init_t Tx_pstcPortInit = {
+    .enPinMode = Pin_Mode_Out,
+    .enLatch = Disable,        
+    .enExInt = Disable,     
+    .enInvert = Disable,       
+    .enPullUp = Enable,  
+    .enPinDrv = Pin_Drv_H,          
+    .enPinOType = Pin_OType_Cmos,
+    .enPinSubFunc = Disable
+  };
+  GPIO_Init(BOARD_USART1_TX_PIN, &Tx_pstcPortInit);
+  #endif
 
   MYSERIAL1.begin(BAUDRATE);
   millis_t serial_connect_timeout = millis() + 1000UL;
