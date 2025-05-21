@@ -1324,11 +1324,11 @@
  */
 
 #ifdef ENV_CHARLIE
-#define E0_AUTO_FAN_PIN PC4
-#elif defined(ENV_ALPHA3)
   #define DEFAULT_MAX_FEEDRATE          { 350, 350, 5, 30 }
-#else 
+#elif defined(ENV_ALPHA3)
   #define DEFAULT_MAX_FEEDRATE          { 300, 300, 10, 100 }
+#else 
+  #define DEFAULT_MAX_FEEDRATE          { 300, 300, 5, 25 }
 #endif
 
 //#define LIMITED_MAX_FR_EDITING        // Limit edit via M203 or LCD to DEFAULT_MAX_FEEDRATE * 2

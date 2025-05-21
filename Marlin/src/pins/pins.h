@@ -945,7 +945,6 @@
   #include "hc32f4/pins_ESP32_HC_V1_5.h"            // HC32F460                             env:HC32F460C_ASD_HC_V1_5  
 #elif MB(ESP32_HC_V4_1)
   #include "hc32f4/pins_ESP32_HC_V4_1.h"            // HC32F460                             env:HC32F460C_ASD_HC_V4_1  
-a3
 //
 // Raspberry Pi RP2040
 //

@@ -126,8 +126,8 @@ private:
 
 // M997: Trigger a firmware update from SD card (after upload).
 //       On HC32F460, a reboot is enough to do this.
-#ifndef PLATFORM_M997_SUPPORT
-  #define PLATFORM_M997_SUPPORT
-#endif
+// #ifndef PLATFORM_M997_SUPPORT
+//   #define PLATFORM_M997_SUPPORT
+// #endif
 
 void flashFirmware(const int16_t);
