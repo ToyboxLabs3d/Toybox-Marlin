@@ -538,6 +538,7 @@
 #define BOARD_ESP32_HC_V4_0           7202  // ASD mainboard (HC32f460kcta)
 #define BOARD_ESP32_HC_V1_5           7203  // ASD ESP-HC V1.5 mainboard (HC32f460kcta)
 #define BOARD_ESP32_HC_V4_1           7204  // ASD mainboard (HC32f460kcta)
+
 //
 // Raspberry Pi
 //

@@ -37,6 +37,8 @@
  */
 #define CONFIGURATION_H_VERSION 02010300
 
+#define NO_USER_FEEDBACK_WARNING
+
 //===========================================================================
 //============================= Getting Started =============================
 //===========================================================================
@@ -68,7 +70,15 @@
 
 // Choose the name from boards.h that matches your setup
 #ifndef MOTHERBOARD
-  #define MOTHERBOARD BOARD_ESP32_HC_V4_1 
+
+  #ifdef ENV_CHARLIE
+    #define MOTHERBOARD BOARD_ESP32_HC_V4_1 
+  #elif defined(ENV_ALPHA3)
+    #define MOTHERBOARD BOARD_ESP32_HC_V1_5  
+  #else 
+    #define MOTHERBOARD BOARD_RAMPS_14_EFB
+  #endif
+
 #endif
 
 // @section serial
@@ -1227,7 +1237,7 @@
  * Set to the state (HIGH or LOW) that applies to each endstop.
  */
 #define X_MIN_ENDSTOP_HIT_STATE HIGH
-#define X_MAX_ENDSTOP_HIT_STATE HIGH
+#define X_MAX_ENDSTOP_HIT_STATE LOW
 #define Y_MIN_ENDSTOP_HIT_STATE HIGH
 #define Y_MAX_ENDSTOP_HIT_STATE LOW
 #define Z_MIN_ENDSTOP_HIT_STATE LOW
@@ -1292,7 +1302,15 @@
  * Override with M92 (when enabled below)
  *                                      X, Y, Z [, I [, J [, K...]]], E0 [, E1[, E2...]]
  */
-#define DEFAULT_AXIS_STEPS_PER_UNIT   { 94.1, 94.1, 400, 692.919 }
+
+
+#ifdef ENV_CHARLIE
+  #define DEFAULT_AXIS_STEPS_PER_UNIT   { 94.1, 94.1, 400, 692.919 }
+#elif defined(ENV_ALPHA3)
+  #define DEFAULT_AXIS_STEPS_PER_UNIT   { 94.15, 94.15, 399.5, 90 }
+#else 
+  #define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 400, 500 }
+#endif
 
 /**
  * Enable support for M92. Disable to save at least ~530 bytes of flash.
@@ -1304,7 +1322,14 @@
  * Override with M203
  *                                      X, Y, Z [, I [, J [, K...]]], E0 [, E1[, E2...]]
  */
-#define DEFAULT_MAX_FEEDRATE          { 350, 350, 5, 30 }
+
+#ifdef ENV_CHARLIE
+#define E0_AUTO_FAN_PIN PC4
+#elif defined(ENV_ALPHA3)
+  #define DEFAULT_MAX_FEEDRATE          { 350, 350, 5, 30 }
+#else 
+  #define DEFAULT_MAX_FEEDRATE          { 300, 300, 10, 100 }
+#endif
 
 //#define LIMITED_MAX_FR_EDITING        // Limit edit via M203 or LCD to DEFAULT_MAX_FEEDRATE * 2
 #if ENABLED(LIMITED_MAX_FR_EDITING)
@@ -1317,7 +1342,14 @@
  * Override with M201
  *                                      X, Y, Z [, I [, J [, K...]]], E0 [, E1[, E2...]]
  */
-#define DEFAULT_MAX_ACCELERATION      { 8000, 8000, 1000, 5000 }
+#ifdef ENV_CHARLIE
+  #define DEFAULT_MAX_ACCELERATION      { 8000, 8000, 1000, 5000 }
+#elif defined(ENV_ALPHA3)
+  #define DEFAULT_MAX_ACCELERATION      { 6000, 6000, 1000, 5000 }
+#else 
+  #define DEFAULT_MAX_ACCELERATION      { 3000, 3000, 100, 10000 }
+#endif
+
 
 //#define LIMITED_MAX_ACCEL_EDITING     // Limit edit via M201 or LCD to DEFAULT_MAX_ACCELERATION * 2
 #if ENABLED(LIMITED_MAX_ACCEL_EDITING)
@@ -1810,9 +1842,22 @@
 // @section motion
 
 // Invert the stepper direction. Change (or reverse the motor connector) if an axis goes the wrong way.
-#define INVERT_X_DIR false 
-#define INVERT_Y_DIR false
-#define INVERT_Z_DIR false
+
+
+#ifdef ENV_CHARLIE
+  #define INVERT_X_DIR false 
+  #define INVERT_Y_DIR false
+  #define INVERT_Z_DIR false
+#elif defined(ENV_ALPHA3)
+  #define INVERT_X_DIR true 
+  #define INVERT_Y_DIR false
+  #define INVERT_Z_DIR true
+#else 
+  #define INVERT_X_DIR false
+  #define INVERT_Y_DIR true
+  #define INVERT_Z_DIR false
+#endif
+
 //#define INVERT_I_DIR false
 //#define INVERT_J_DIR false
 //#define INVERT_K_DIR false
@@ -1882,8 +1927,18 @@
 // @section geometry
 
 // The size of the printable area
-#define X_BED_SIZE 190
-#define Y_BED_SIZE 182
+
+
+#ifdef ENV_CHARLIE
+  #define X_BED_SIZE 190
+  #define Y_BED_SIZE 182
+#elif defined(ENV_ALPHA3)
+  #define X_BED_SIZE 80
+  #define Y_BED_SIZE 80
+#else 
+  #define X_BED_SIZE 200
+  #define Y_BED_SIZE 200
+#endif
 
 // Travel limits (linear=mm, rotational=°) after homing, corresponding to endstop positions.
 #define X_MIN_POS 0
@@ -1891,7 +1946,15 @@
 #define Z_MIN_POS 0
 #define X_MAX_POS X_BED_SIZE
 #define Y_MAX_POS Y_BED_SIZE
-#define Z_MAX_POS 190
+
+#ifdef ENV_CHARLIE
+  #define Z_MAX_POS 190
+#elif defined(ENV_ALPHA3)
+  #define Z_MAX_POS 90
+#else 
+  #define Z_MAX_POS 200
+#endif
+
 //#define I_MIN_POS 0
 //#define I_MAX_POS 50
 //#define J_MIN_POS 0

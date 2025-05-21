@@ -689,7 +689,15 @@
  * Multiple extruders can be assigned to the same pin in which case
  * the fan will turn on when any selected extruder is above the threshold.
  */
+
+#ifdef ENV_CHARLIE
 #define E0_AUTO_FAN_PIN PC4
+#elif defined(ENV_ALPHA3)
+#define E0_AUTO_FAN_PIN PA8
+#else 
+#define E0_AUTO_FAN_PIN -1
+#endif
+
 #define E1_AUTO_FAN_PIN -1
 #define E2_AUTO_FAN_PIN -1
 #define E3_AUTO_FAN_PIN -1
@@ -1207,7 +1215,10 @@
  */
 #define INPUT_SHAPING_X
 #define INPUT_SHAPING_Y
-//#define INPUT_SHAPING_Z
+#ifdef ENV_ALPHA3
+#define INPUT_SHAPING_Z
+#endif
+
 #if ANY(INPUT_SHAPING_X, INPUT_SHAPING_Y, INPUT_SHAPING_Z)
   #if ENABLED(INPUT_SHAPING_X)
     #define SHAPING_FREQ_X  54.8       // (Hz) The default dominant resonant frequency on the X axis.
@@ -2640,6 +2651,7 @@
 // For debug-echo: 128 bytes for the optimal speed.
 // Other output doesn't need to be that speedy.
 // :[0, 2, 4, 8, 16, 32, 64, 128, 256]
+// TODO (Alex) Make 128
 #define TX_BUFFER_SIZE 32
 
 // Host Receive Buffer Size
