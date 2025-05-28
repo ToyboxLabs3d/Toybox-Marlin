@@ -1336,6 +1336,8 @@ private:
     static void M710_report(const bool forReplay=true);
   #endif
 
+   static void M10002();
+
   static void T(const int8_t tool_index) IF_DISABLED(HAS_TOOLCHANGE, { UNUSED(tool_index); });
 
 };
