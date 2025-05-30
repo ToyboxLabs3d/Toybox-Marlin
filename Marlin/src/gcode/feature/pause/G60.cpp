@@ -26,6 +26,7 @@
 
 #include "../../gcode.h"
 #include "../../../module/motion.h"
+#include "../../../module/temperature.h"
 
 #define DEBUG_OUT ENABLED(SAVED_POSITIONS_DEBUG)
 #include "../../../core/debug_out.h"
@@ -100,6 +101,12 @@ void GcodeSuite::G60() {
 
   // G60 S
   stored_position[slot] = current_position;
+
+  stored_axis_relative[slot] = gcode.axis_relative;
+  stored_feedrate[slot] = feedrate_mm_s;
+  stored_temperature[slot] = thermalManager.degTargetHotend(0);
+  memcpy(stored_fanspeed[slot], thermalManager.fan_speed, sizeof(thermalManager.fan_speed));
+
   did_save_position.set(slot);
   report_stored_position(slot);
 }

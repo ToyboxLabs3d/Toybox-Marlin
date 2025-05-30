@@ -28,6 +28,7 @@
 #include "../../gcode.h"
 #include "../../../module/motion.h"
 #include "../../../module/planner.h"
+#include "../../../module/temperature.h"
 
 #define DEBUG_OUT ENABLED(SAVED_POSITIONS_DEBUG)
 #include "../../../core/debug_out.h"
@@ -67,6 +68,29 @@ void GcodeSuite::G61(int8_t slot/*=-1*/) {
 
   // No saved position? No axes being restored?
   if (!did_save_position[slot]) return;
+
+
+  const bool restore_feedrate = parser.boolval('Q');
+  const bool restore_axis_relative = parser.boolval('R');
+  const bool restore_temperature = parser.boolval('T');
+  const bool restore_fanspeed = parser.boolval('U');
+  // process_subcommands_now
+  if(restore_feedrate){
+    feedrate_mm_s = stored_feedrate[slot];
+  }
+  if(restore_axis_relative){
+    axis_relative = stored_axis_relative[slot];
+  }
+  if(restore_fanspeed){
+    for(uint8_t i=0; i<FAN_COUNT; i++){
+      thermalManager.set_fan_speed(i, stored_fanspeed[slot][i]);
+    }
+  }
+  if(restore_temperature) {
+    char buff[13];
+    snprintf(buff, sizeof(buff), "M104 S%d", (int) stored_temperature[slot]);
+    gcode.process_subcommands_now(buff);
+  }
 
   // Apply any given feedrate over 0.0
   REMEMBER(saved, feedrate_mm_s);
