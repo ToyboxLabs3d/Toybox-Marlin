@@ -584,7 +584,11 @@
 #define TEMP_SENSOR_5 0
 #define TEMP_SENSOR_6 0
 #define TEMP_SENSOR_7 0
-#define TEMP_SENSOR_BED 1
+#ifdef ENV_ALPHA3
+  #define TEMP_SENSOR_BED 0
+#elif defined(ENV_CHARLIE)
+  #define TEMP_SENSOR_BED 1
+#endif
 #define TEMP_SENSOR_PROBE 0
 #define TEMP_SENSOR_CHAMBER 0
 #define TEMP_SENSOR_COOLER 0
