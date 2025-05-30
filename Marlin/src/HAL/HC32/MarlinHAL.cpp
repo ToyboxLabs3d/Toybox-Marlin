@@ -152,6 +152,12 @@ void MarlinHAL::delay_ms(const int ms) {
   delay(ms);
 }
 
+#ifdef ENV_CHARLIE
+  extern uint32_t raw_HALL_ADC_value;
+  uint32_t tick_t=0;
+  uint8_t hall_adc_debug=0;
+#endif
+
 void MarlinHAL::idletask() {
   #if ENABLED(MARLIN_DEV_MODE)
     // check & print serial RX errors
@@ -176,6 +182,16 @@ void MarlinHAL::idletask() {
       }
     }
   #endif
+  #ifdef ENV_CHARLIE
+  if(hall_adc_debug == 1)
+  {
+    if(millis()-tick_t >=1000)
+    {
+      tick_t = millis();
+      SERIAL_ECHO_MSG("Hall adc value:",raw_HALL_ADC_value); 
+    }
+  }
+ #endif
 }
 
 uint8_t MarlinHAL::get_reset_source() {

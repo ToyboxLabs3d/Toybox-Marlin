@@ -27,7 +27,9 @@
 
 #include "gcode.h"
 GcodeSuite gcode;
-
+#ifdef ENV_CHARLIE
+  extern uint8_t hall_adc_debug;
+#endif
 #if ENABLED(WIFI_CUSTOM_COMMAND)
   extern bool wifi_custom_command(char * const command_ptr);
 #endif
@@ -1144,7 +1146,16 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
       #if ENABLED(HAS_MCP3426_ADC)
         case 3426: M3426(); break;                                // M3426: Read MCP3426 ADC (over i2c)
       #endif
-
+      #ifdef ENV_CHARLIE
+        #if HAS_HALL_SENSOR
+        case 10000:
+          hall_adc_debug = 1;
+        break;
+        case 10001:
+          hall_adc_debug = 0;
+        break;
+        #endif
+      #endif
       default: parser.unknown_command_warning(); break;
     }
     break;

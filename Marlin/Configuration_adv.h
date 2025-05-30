@@ -309,7 +309,11 @@
  */
 #if ALL(HAS_HOTEND, THERMAL_PROTECTION_HOTENDS)
   #define THERMAL_PROTECTION_PERIOD        40 // (seconds)
-  #define THERMAL_PROTECTION_HYSTERESIS     4 // (°C)
+  #ifdef ENV_ALPHA3
+    #define THERMAL_PROTECTION_HYSTERESIS     4 // (°C
+#elif defined(ENV_CHARLIE)
+  #define THERMAL_PROTECTION_HYSTERESIS     20//4 // (°C)
+#endif
 
   //#define ADAPTIVE_FAN_SLOWING              // Slow down the part-cooling fan if the temperature drops
   #if ENABLED(ADAPTIVE_FAN_SLOWING)
@@ -331,7 +335,11 @@
    * and/or decrease WATCH_TEMP_INCREASE. WATCH_TEMP_INCREASE should not be set
    * below 2.
    */
+#ifdef ENV_ALPHA3
   #define WATCH_TEMP_PERIOD  40               // (seconds)
+#elif defined(ENV_CHARLIE)
+  #define WATCH_TEMP_PERIOD  60               // (seconds)
+#endif
   #define WATCH_TEMP_INCREASE 2               // (°C)
 #endif
 
@@ -577,7 +585,9 @@
  * The fan turns on automatically whenever any driver is enabled and turns
  * off (or reduces to idle speed) shortly after drivers are turned off.
  */
-//#define USE_CONTROLLER_FAN
+#ifdef ENV_CHARLIE
+  #define USE_CONTROLLER_FAN
+#endif
 #if ENABLED(USE_CONTROLLER_FAN)
   //#define CONTROLLER_FAN_PIN -1           // Set a custom pin for the controller fan
   //#define CONTROLLER_FAN2_PIN -1          // Set a custom pin for second controller fan
@@ -694,8 +704,6 @@
 #define E0_AUTO_FAN_PIN PC4
 #elif defined(ENV_ALPHA3)
 #define E0_AUTO_FAN_PIN PA8
-#else 
-#define E0_AUTO_FAN_PIN -1
 #endif
 
 #define E1_AUTO_FAN_PIN -1
@@ -1213,10 +1221,10 @@
  *
  * Tune with M593 D<factor> F<frequency>
  */
-#define INPUT_SHAPING_X
-#define INPUT_SHAPING_Y
 #ifdef ENV_ALPHA3
-#define INPUT_SHAPING_Z
+  #define INPUT_SHAPING_X
+  #define INPUT_SHAPING_Y
+  #define INPUT_SHAPING_Z
 #endif
 
 #if ANY(INPUT_SHAPING_X, INPUT_SHAPING_Y, INPUT_SHAPING_Z)
@@ -2414,10 +2422,12 @@
  * the probe to be unable to reach any points.
  */
 #if PROBE_SELECTED && !IS_KINEMATIC
-  //#define PROBING_MARGIN_LEFT PROBING_MARGIN
-  //#define PROBING_MARGIN_RIGHT PROBING_MARGIN
-  //#define PROBING_MARGIN_FRONT PROBING_MARGIN
-  //#define PROBING_MARGIN_BACK PROBING_MARGIN
+  #ifdef ENV_CHARLIE
+    #define PROBING_MARGIN_LEFT PROBING_MARGIN
+    #define PROBING_MARGIN_RIGHT PROBING_MARGIN
+    #define PROBING_MARGIN_FRONT PROBING_MARGIN
+    #define PROBING_MARGIN_BACK PROBING_MARGIN
+#endif
 #endif
 
 #if ANY(MESH_BED_LEVELING, AUTO_BED_LEVELING_UBL)
