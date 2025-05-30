@@ -118,6 +118,10 @@
   #define TEMP_SENSOR_SOC 0
 #endif
 
+#ifdef ENV_CHARLIE
+uint32_t raw_HALL_ADC_value=0;
+#endif
+
 // MAX TC related macros
 #define TEMP_SENSOR_IS_MAX(n, M) (ENABLED(TEMP_SENSOR_##n##_IS_MAX##M) || (ENABLED(TEMP_SENSOR_REDUNDANT_IS_MAX##M) && REDUNDANT_TEMP_MATCH(SOURCE, E##n)))
 
@@ -869,7 +873,11 @@ volatile bool Temperature::raw_temps_ready = false;
 
       // Did the temperature overshoot very far?
       #ifndef MAX_OVERSHOOT_PID_AUTOTUNE
+      #ifdef ENV_ALPHA3
         #define MAX_OVERSHOOT_PID_AUTOTUNE 30
+      #elif defined(ENV_CHARLIE)
+        #define MAX_OVERSHOOT_PID_AUTOTUNE 40//30
+      #endif
       #endif
       if (current_temp > target + MAX_OVERSHOOT_PID_AUTOTUNE) {
         SERIAL_ECHOPGM(STR_PID_AUTOTUNE); SERIAL_ECHOLNPGM(STR_PID_TEMP_TOO_HIGH);
@@ -3124,6 +3132,9 @@ void Temperature::init() {
   TERN_(HAS_ADC_BUTTONS,        hal.adc_enable(ADC_KEYPAD_PIN));
   TERN_(POWER_MONITOR_CURRENT,  hal.adc_enable(POWER_MONITOR_CURRENT_PIN));
   TERN_(POWER_MONITOR_VOLTAGE,  hal.adc_enable(POWER_MONITOR_VOLTAGE_PIN));
+#ifdef ENV_CHARLIE
+  TERN_(HAS_HALL_SENSOR,       hal.adc_enable(FIL_HALL_PIN)); //halL
+#endif
 
   #if HAS_JOY_ADC_EN
     SET_INPUT_PULLUP(JOY_EN_PIN);
@@ -4480,6 +4491,17 @@ void Temperature::isr() {
         if (ADCKey_count == ADC_BUTTON_DEBOUNCE_DELAY) ADCKey_pressed = true;
         break;
     #endif // HAS_ADC_BUTTONS
+    #ifdef ENV_CHARLIE
+      #if HAS_HALL_SENSOR
+        case Prepare_HALL_ADC: hal.adc_start(FIL_HALL_PIN); break;
+        case Measure_HALL_ADC: 
+          if (!hal.adc_ready())
+            next_sensor_state = adc_sensor_state; // redo this state
+          else 
+            raw_HALL_ADC_value = hal.adc_value(); 
+          break;
+      #endif
+    #endif // ENV_CHARLIE
 
     case StartupDelay: break;
 

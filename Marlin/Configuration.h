@@ -584,7 +584,7 @@
 #define TEMP_SENSOR_5 0
 #define TEMP_SENSOR_6 0
 #define TEMP_SENSOR_7 0
-#define TEMP_SENSOR_BED 0
+#define TEMP_SENSOR_BED 1
 #define TEMP_SENSOR_PROBE 0
 #define TEMP_SENSOR_CHAMBER 0
 #define TEMP_SENSOR_COOLER 0
@@ -716,9 +716,15 @@
     #define DEFAULT_Ki_LIST {   1.08,   1.08 }
     #define DEFAULT_Kd_LIST { 114.00, 114.00 }
   #else
-    #define DEFAULT_Kp  22.20
-    #define DEFAULT_Ki   1.08
-    #define DEFAULT_Kd 114.00
+    #ifdef ENV_ALPHA3
+      #define DEFAULT_Kp  22.20
+      #define DEFAULT_Ki   1.08
+      #define DEFAULT_Kd 114.00
+    #elif defined(ENV_CHARLIE)
+        #define DEFAULT_Kp  36.144//22.20
+        #define DEFAULT_Ki  5.877//1.08
+        #define DEFAULT_Kd 55.572//114.00
+    #endif
   #endif
 #else
   #define BANG_MAX 255    // Limit hotend current while in bang-bang mode; 255=full current
@@ -1254,7 +1260,11 @@
 #define V_MAX_ENDSTOP_HIT_STATE HIGH
 #define W_MIN_ENDSTOP_HIT_STATE HIGH
 #define W_MAX_ENDSTOP_HIT_STATE HIGH
-#define Z_MIN_PROBE_ENDSTOP_HIT_STATE HIGH
+#ifdef ENV_ALPHA3
+  #define Z_MIN_PROBE_ENDSTOP_HIT_STATE HIGH
+#elif defined(ENV_CHARLIE)
+  #define Z_MIN_PROBE_ENDSTOP_HIT_STATE LOW // Charlie uses a normally closed Z probe
+#endif
 
 // Enable this feature if all enabled endstop pins are interrupt-capable.
 // This will remove the need to poll the interrupt pins, saving many CPU cycles.
@@ -1308,8 +1318,6 @@
   #define DEFAULT_AXIS_STEPS_PER_UNIT   { 94.1, 94.1, 400, 692.919 }
 #elif defined(ENV_ALPHA3)
   #define DEFAULT_AXIS_STEPS_PER_UNIT   { 94.15, 94.15, 399.5, 90 }
-#else 
-  #define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 400, 500 }
 #endif
 
 /**
@@ -1343,7 +1351,7 @@
  *                                      X, Y, Z [, I [, J [, K...]]], E0 [, E1[, E2...]]
  */
 #ifdef ENV_CHARLIE
-  #define DEFAULT_MAX_ACCELERATION      { 8000, 8000, 1000, 5000 }
+  #define DEFAULT_MAX_ACCELERATION      { 18000, 18000, 1000, 5000 }
 #elif defined(ENV_ALPHA3)
   #define DEFAULT_MAX_ACCELERATION      { 6000, 6000, 1000, 5000 }
 #else 
@@ -1434,8 +1442,9 @@
  * The probe replaces the Z-MIN endstop and is used for Z homing.
  * (Automatically enables USE_PROBE_FOR_Z_HOMING.)
  */
+#ifdef ENV_ALPHA3
 #define Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN
-
+#endif
 // Force the use of the probe for Z-axis homing
 //#define USE_PROBE_FOR_Z_HOMING
 
@@ -1452,8 +1461,9 @@
  *    - Normally-closed (NC) also connect to GND.
  *    - Normally-open (NO) also connect to 5V.
  */
-//#define Z_MIN_PROBE_PIN -1
-
+#ifdef ENV_CHARLIE
+#define Z_MIN_PROBE_PIN  PB12  
+#endif
 /**
  * Probe Type
  *
@@ -1472,8 +1482,9 @@
  * A Fix-Mounted Probe either doesn't deploy or needs manual deployment.
  *   (e.g., an inductive probe or a nozzle-based probe-switch.)
  */
-//#define FIX_MOUNTED_PROBE
-
+#ifdef ENV_CHARLIE
+#define FIX_MOUNTED_PROBE
+#endif
 /**
  * Use the nozzle as the probe, as with a conductive
  * nozzle system or a piezo-electric smart effector.
@@ -1670,7 +1681,13 @@
  *     |    [-]    |
  *     O-- FRONT --+
  */
-#define NOZZLE_TO_PROBE_OFFSET { 10, 10, 0 }
+#ifdef ENV_ALPHA3
+  #define NOZZLE_TO_PROBE_OFFSET { 10, 10, 0 }
+#elif defined(ENV_CHARLIE)
+  #define NOZZLE_TO_PROBE_OFFSET { 0, 25, 0 }
+#endif
+
+
 
 // Enable and set to use a specific tool for probing. Disable to allow any tool.
 #define PROBING_TOOL 0
@@ -1680,7 +1697,11 @@
 
 // Most probes should stay away from the edges of the bed, but
 // with NOZZLE_AS_PROBE this can be negative for a wider probing area.
-#define PROBING_MARGIN 10
+#ifdef ENV_ALPHA3
+  #define PROBING_MARGIN 10
+#elif defined(ENV_CHARLIE)
+  #define PROBING_MARGIN 30
+#endif
 
 // X and Y axis travel speed between probes.
 // Leave undefined to use the average of the current XY homing feedrate.
@@ -1845,17 +1866,13 @@
 
 
 #ifdef ENV_CHARLIE
-  #define INVERT_X_DIR false 
+  #define INVERT_X_DIR true 
   #define INVERT_Y_DIR false
   #define INVERT_Z_DIR false
 #elif defined(ENV_ALPHA3)
   #define INVERT_X_DIR true 
   #define INVERT_Y_DIR false
   #define INVERT_Z_DIR true
-#else 
-  #define INVERT_X_DIR false
-  #define INVERT_Y_DIR true
-  #define INVERT_Z_DIR false
 #endif
 
 //#define INVERT_I_DIR false
@@ -1868,7 +1885,12 @@
 // @section extruder
 
 // For direct drive extruder v9 set to true, for geared extruder set to false.
-#define INVERT_E0_DIR true
+#ifdef ENV_ALPHA3
+  #define INVERT_E0_DIR true
+#elif defined(ENV_CHARLIE)
+  #define INVERT_E0_DIR false
+#endif
+
 #define INVERT_E1_DIR false
 #define INVERT_E2_DIR false
 #define INVERT_E3_DIR false
@@ -2167,7 +2189,9 @@
  */
 //#define AUTO_BED_LEVELING_3POINT
 //#define AUTO_BED_LEVELING_LINEAR
-//#define AUTO_BED_LEVELING_BILINEAR
+#ifdef ENV_CHARLIE
+  #define AUTO_BED_LEVELING_BILINEAR
+#endif
 //#define AUTO_BED_LEVELING_UBL
 //#define MESH_BED_LEVELING
 

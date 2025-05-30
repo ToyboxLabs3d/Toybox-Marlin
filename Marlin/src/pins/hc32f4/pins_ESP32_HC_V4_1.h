@@ -104,6 +104,12 @@
   #define FIL_RUNOUT_PIN                    -1   // "Pulled-high" *
 #endif
 
+#ifdef ENV_CHARLIE
+  #define FIL_HALL_PIN                    PA5   // HALL
+  #ifdef FIL_HALL_PIN
+  #define HAS_HALL_SENSOR                   1
+  #endif
+#endif
 //
 // Steppers
 //
@@ -143,7 +149,11 @@
 // Temperature Sensors
 //
 #define TEMP_0_PIN                          PA4   // HEATER1 ADC1_IN0
-#define TEMP_BED_PIN                        PA5   // HOT BED ADC1_IN14
+#ifdef ENV_ALPHA3
+  #define TEMP_BED_PIN                        PA5   // HOT BED ADC1_IN14
+#elif defined(ENV_CHARLIE)
+  #define TEMP_BED_PIN                        PA3   // HOT BED ADC1_IN14
+#endif
 
 //
 // Heaters / Fans
@@ -151,9 +161,16 @@
 #define HEATER_0_PIN                        PA9   // HEATER1
 #define HEATER_BED_PIN                      PB15   // HOT BED
 
-#define FAN0_PIN                            PA7//PC4   // FAN0
-#define FAN1_PIN                            PB3//PA7   // FAN1
-//#define FAN2_PIN                            PB3   // FAN1
+#ifdef ENV_ALPHA3
+  #define FAN0_PIN                            PA7//PC4   // FAN0
+  #define FAN1_PIN                            PB3//PA7   // FAN1
+  //#define FAN2_PIN                            PB3   // FAN1
+#elif defined(ENV_CHARLIE)
+  #define FAN0_PIN                            PA7//PC4   // FAN0
+  //#define FAN1_PIN                            PB3//PA7   // FAN1
+  //#define FAN2_PIN                            PD2   // FAN1
+  #define CONTROLLER_FAN_PIN                   PB3
+#endif
 
 
 //
