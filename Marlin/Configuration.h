@@ -1357,7 +1357,7 @@
 #ifdef ENV_CHARLIE
   #define DEFAULT_MAX_ACCELERATION      { 18000, 18000, 1000, 5000 }
 #elif defined(ENV_ALPHA3)
-  #define DEFAULT_MAX_ACCELERATION      { 6000, 6000, 1000, 5000 }
+  #define DEFAULT_MAX_ACCELERATION      { 5000, 5000, 1000, 5000 }
 #else 
   #define DEFAULT_MAX_ACCELERATION      { 3000, 3000, 100, 10000 }
 #endif
@@ -1376,9 +1376,9 @@
  *   M204 R    Retract Acceleration
  *   M204 T    Travel Acceleration
  */
-#define DEFAULT_ACCELERATION          6000    // X, Y, Z and E acceleration for printing moves
-#define DEFAULT_RETRACT_ACCELERATION  3000    // E acceleration for retracts
-#define DEFAULT_TRAVEL_ACCELERATION   8000    // X, Y, Z acceleration for travel (non printing) moves
+#define DEFAULT_ACCELERATION          5000    // X, Y, Z and E acceleration for printing moves
+#define DEFAULT_RETRACT_ACCELERATION  1000    // E acceleration for retracts
+#define DEFAULT_TRAVEL_ACCELERATION   6000    // X, Y, Z acceleration for travel (non printing) moves
 
 /**
  * Default Jerk limits (mm/s)

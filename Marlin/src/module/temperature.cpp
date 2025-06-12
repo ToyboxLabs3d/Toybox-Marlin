@@ -4717,6 +4717,10 @@ void Temperature::isr() {
           if (no_wait_for_cooling && wants_to_cool) break;
         }
 
+        if(target_temp <= 0 ){
+          break;
+        }
+
         now = millis();
         if (ELAPSED(now, next_temp_ms)) { // Print temp & remaining time every 1s while waiting
           next_temp_ms = now + 1000UL;
