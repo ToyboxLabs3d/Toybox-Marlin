@@ -1321,7 +1321,7 @@
 #ifdef ENV_CHARLIE
   #define DEFAULT_AXIS_STEPS_PER_UNIT   { 94.1, 94.1, 400, 692.919 }
 #elif defined(ENV_ALPHA3)
-  #define DEFAULT_AXIS_STEPS_PER_UNIT   { 94.15, 94.15, 399.5, 90 }
+  #define DEFAULT_AXIS_STEPS_PER_UNIT   { 94.15, 94.15, 400, 90 }
 #endif
 
 /**

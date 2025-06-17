@@ -1,7 +1,7 @@
 #include "../gcode.h"
 
 #ifdef ENV_ALPHA3
-    #define BUILD_NUMBER 2
+    #define BUILD_NUMBER 3
     #define VERSION_STRING "1.0.0"
 #elif defined(ENV_CHARLIE)
     #define BUILD_NUMBER 100
