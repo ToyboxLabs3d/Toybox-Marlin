@@ -100,6 +100,7 @@
 //
 // Filament Runout Sensor
 //
+#define FIL_RUNOUT_PIN PB12
 #ifndef FIL_RUNOUT_PIN
   #define FIL_RUNOUT_PIN                    -1   // "Pulled-high" *
 #endif
