@@ -95,8 +95,12 @@
 //
 #define X_STOP_PIN                          PB4
 #define Y_STOP_PIN                          PC2
-#define Z_STOP_PIN                          PC6
+#ifdef ENV_CHARLIE
+#define Z_STOP_PIN                          PB12
 
+#else
+#define Z_STOP_PIN                          PC6
+#endif
 //
 // Filament Runout Sensor
 //
