@@ -2221,7 +2221,7 @@
  * these options to restore the prior leveling state or to always enable
  * leveling immediately after G28.
  */
-//#define RESTORE_LEVELING_AFTER_G28
+#define RESTORE_LEVELING_AFTER_G28
 //#define ENABLE_LEVELING_AFTER_G28
 
 /**
@@ -2662,8 +2662,8 @@
 
   // Specify positions for each tool as { { X, Y, Z }, { X, Y, Z } }
   // Dual hotend system may use { {  -20, (Y_BED_SIZE / 2), (Z_MIN_POS + 1) },  {  420, (Y_BED_SIZE / 2), (Z_MIN_POS + 1) }}
-  #define NOZZLE_CLEAN_START_POINT { {  150, 185, (Z_MIN_POS + 1) } }
-  #define NOZZLE_CLEAN_END_POINT   { { 185, 185, (Z_MIN_POS + 1) } }
+  #define NOZZLE_CLEAN_START_POINT { {  155, 185, (Z_MIN_POS + 1) } }
+  #define NOZZLE_CLEAN_END_POINT   { { 175, 185, (Z_MIN_POS + 1) } }
   #define CLEAN_FEEDRATE 350
   #if ENABLED(NOZZLE_CLEAN_PATTERN_CIRCLE)
     #define NOZZLE_CLEAN_CIRCLE_RADIUS 6.5                      // (mm) Circular pattern radius
