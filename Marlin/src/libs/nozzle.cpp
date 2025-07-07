@@ -54,7 +54,7 @@ Nozzle nozzle;
       // Move to the starting point
       #if ENABLED(NOZZLE_CLEAN_NO_Z)
         #if ENABLED(NOZZLE_CLEAN_NO_Y)
-          do_blocking_move_to_x(start.x);
+          do_blocking_move_to_x(start.x, TERN(CLEAN_FEEDRATE, CLEAN_FEEDRATE, 0));
         #else
           do_blocking_move_to_xy(start);
         #endif
@@ -65,15 +65,15 @@ Nozzle nozzle;
       // Start the stroke pattern
       for (uint8_t i = 0; i < strokes >> 1; ++i) {
         #if ENABLED(NOZZLE_CLEAN_NO_Y)
-          do_blocking_move_to_x(end.x);
-          do_blocking_move_to_x(start.x);
+          do_blocking_move_to_x(end.x, TERN(CLEAN_FEEDRATE, CLEAN_FEEDRATE, 0));
+          do_blocking_move_to_x(start.x,TERN(CLEAN_FEEDRATE, CLEAN_FEEDRATE, 0));
         #else
           do_blocking_move_to_xy(end);
           do_blocking_move_to_xy(start);
         #endif
       }
 
-      TERN_(NOZZLE_CLEAN_GOBACK, do_blocking_move_to(oldpos));
+      TERN_(NOZZLE_CLEAN_GOBACK, do_blocking_move_to(oldpos,TERN(CLEAN_FEEDRATE, CLEAN_FEEDRATE, 0)));
     }
   #endif
 
