@@ -29,7 +29,17 @@
 #include <wiring_analog.h>
 #include <drivers/gpio/gpio.h>
 
-#define READ(IO) (GPIO_GetBit(IO) ? HIGH : LOW)
+
+#ifdef ENV_CHARLIE
+  extern uint32_t raw_HALL_ADC_value;
+  extern bool simulate_filament_runout;
+  #define READ(IO) ((IO) == FIL_RUNOUT_PIN ? _FIL_RUNOUT_FAKE_READ(): _READ(IO))
+  #define _FIL_RUNOUT_FAKE_READ() (simulate_filament_runout || raw_HALL_ADC_value > 1400 ? HIGH : LOW)
+  #define _READ(IO) (GPIO_GetBit(IO) ? HIGH : LOW)
+#else
+  #define READ(IO) (GPIO_GetBit(IO) ? HIGH : LOW)
+#endif
+
 #define WRITE(IO, V) (((V) > 0) ? GPIO_SetBits(IO) : GPIO_ResetBits(IO))
 #define TOGGLE(IO) (GPIO_Toggle(IO))
 
