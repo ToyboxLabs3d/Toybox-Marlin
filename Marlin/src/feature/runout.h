@@ -138,26 +138,40 @@ class TFilamentMonitor : public FilamentMonitorBase {
 
     // Give the response a chance to update its counter.
     static void run() {
-      if (enabled && !filament_ran_out && should_monitor_runout()) {
-        TERN_(HAS_FILAMENT_RUNOUT_DISTANCE, cli()); // Prevent RunoutResponseDelayed::block_completed from accumulating here
-        response.run();
-        sensor.run();
-        const runout_flags_t runout_flags = response.has_run_out();
-        TERN_(HAS_FILAMENT_RUNOUT_DISTANCE, sei());
-        #if MULTI_FILAMENT_SENSOR
-          #if ENABLED(WATCH_ALL_RUNOUT_SENSORS)
-            const bool ran_out = bool(runout_flags);  // any sensor triggers
-            uint8_t extruder = 0;
-            if (ran_out) while (!runout_flags.test(extruder)) extruder++;
-          #else
-            const bool ran_out = runout_flags[active_extruder];  // suppress non active extruders
-            uint8_t extruder = active_extruder;
-          #endif
+
+      static bool first_run = true;
+      static bool was_runout = false;
+
+      TERN_(HAS_FILAMENT_RUNOUT_DISTANCE, cli()); // Prevent RunoutResponseDelayed::block_completed from accumulating here
+      response.run();
+      sensor.run();
+      const runout_flags_t runout_flags = response.has_run_out();
+      TERN_(HAS_FILAMENT_RUNOUT_DISTANCE, sei());
+      #if MULTI_FILAMENT_SENSOR
+        #if ENABLED(WATCH_ALL_RUNOUT_SENSORS)
+          const bool ran_out = bool(runout_flags);  // any sensor triggers
+          uint8_t extruder = 0;
+          if (ran_out) while (!runout_flags.test(extruder)) extruder++;
         #else
-          const bool ran_out = bool(runout_flags);
+          const bool ran_out = runout_flags[active_extruder];  // suppress non active extruders
           uint8_t extruder = active_extruder;
         #endif
+      #else
+        const bool ran_out = bool(runout_flags);
+        uint8_t extruder = active_extruder;
+      #endif
 
+      if(ran_out != was_runout || first_run) {
+        was_runout = ran_out;
+        first_run = false;
+        if(ran_out){
+          SERIAL_ECHO_MSG("filament_not_loaded");
+        }else {
+          SERIAL_ECHO_MSG("filament_loaded");
+        }
+      }
+      
+      if (enabled && !filament_ran_out && should_monitor_runout()) {
         if (ran_out) {
           #if ENABLED(FILAMENT_RUNOUT_SENSOR_DEBUG)
             SERIAL_ECHOPGM("Runout Sensors: ");
