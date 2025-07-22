@@ -33,8 +33,9 @@
 #ifdef ENV_CHARLIE
   extern uint32_t raw_HALL_ADC_value;
   extern bool simulate_filament_runout;
+  extern bool fake_filament_pin_state;
   #define READ(IO) ((IO) == FIL_RUNOUT_PIN ? _FIL_RUNOUT_FAKE_READ(): _READ(IO))
-  #define _FIL_RUNOUT_FAKE_READ() (simulate_filament_runout || raw_HALL_ADC_value > 1400 ? HIGH : LOW)
+  #define _FIL_RUNOUT_FAKE_READ() ((simulate_filament_runout || fake_filament_pin_state) ? HIGH : LOW)
   #define _READ(IO) (GPIO_GetBit(IO) ? HIGH : LOW)
 #else
   #define READ(IO) (GPIO_GetBit(IO) ? HIGH : LOW)

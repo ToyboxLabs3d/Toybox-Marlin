@@ -53,6 +53,9 @@
 
 #define FILAMENT_IS_OUT(N...) (READ(FIL_RUNOUT##N##_PIN) == FIL_RUNOUT##N##_STATE)
 
+  
+extern bool need_runout_state_print;
+
 typedef Flags<
           #if NUM_MOTION_SENSORS > NUM_RUNOUT_SENSORS
             NUM_MOTION_SENSORS
@@ -107,6 +110,7 @@ class TFilamentMonitor : public FilamentMonitorBase {
     }
 
     static void reset() {
+      SERIAL_ECHO_MSG("TFilamentMonitor::reset()");
       filament_ran_out = false;
       response.reset();
     }
@@ -114,6 +118,7 @@ class TFilamentMonitor : public FilamentMonitorBase {
     // Call this method when filament is present,
     // so the response can reset its counter.
     static void filament_present(const uint8_t extruder) {
+      // SERIAL_ECHO_MSG("TFilamentMonitor::filament_present()");
       response.filament_present(extruder);
     }
     #if ENABLED(FILAMENT_SWITCH_AND_MOTION)
@@ -139,7 +144,6 @@ class TFilamentMonitor : public FilamentMonitorBase {
     // Give the response a chance to update its counter.
     static void run() {
 
-      static bool first_run = true;
       static bool was_runout = false;
 
       TERN_(HAS_FILAMENT_RUNOUT_DISTANCE, cli()); // Prevent RunoutResponseDelayed::block_completed from accumulating here
@@ -161,9 +165,9 @@ class TFilamentMonitor : public FilamentMonitorBase {
         uint8_t extruder = active_extruder;
       #endif
 
-      if(ran_out != was_runout || first_run) {
+      if(ran_out != was_runout || need_runout_state_print) {
         was_runout = ran_out;
-        first_run = false;
+        need_runout_state_print = false;
         if(ran_out){
           SERIAL_ECHO_MSG("filament_not_loaded");
         }else {

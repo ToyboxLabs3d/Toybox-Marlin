@@ -40,6 +40,7 @@ bool simulate_filament_runout = false; // Used for testing
  *  D<linear> : Extra distance to continue after runout is triggered
  */
 void GcodeSuite::M412() {
+  need_runout_state_print = true;
   if(parser.seenval('F')){
     simulate_filament_runout = parser.value_bool();
   }

@@ -158,6 +158,8 @@ void MarlinHAL::delay_ms(const int ms) {
   uint8_t hall_adc_debug=0;
 #endif
 
+bool fake_filament_pin_state = false;
+
 void MarlinHAL::idletask() {
   #if ENABLED(MARLIN_DEV_MODE)
     // check & print serial RX errors
@@ -183,12 +185,21 @@ void MarlinHAL::idletask() {
     }
   #endif
   #ifdef ENV_CHARLIE
-  if(hall_adc_debug == 1)
-  {
+  fake_filament_pin_state = (raw_HALL_ADC_value > 1600);
+  if(hall_adc_debug == 1){
+    static uint16_t highest_seen = 0;
+    static uint16_t lowest_seen = 0xFFFF;
+    static uint32_t count = 0;
+    count++;
+    highest_seen = max(highest_seen, raw_HALL_ADC_value);
+    lowest_seen = min(lowest_seen, raw_HALL_ADC_value);
     if(millis()-tick_t >=1000)
     {
       tick_t = millis();
-      SERIAL_ECHO_MSG("Hall adc value:",raw_HALL_ADC_value); 
+      SERIAL_ECHO_MSG("Hall adc value:",raw_HALL_ADC_value, " highest:",highest_seen, " lowest:",lowest_seen, " count:",count, " fake state:", fake_filament_pin_state);
+      highest_seen = 0;
+      lowest_seen = 0xFFFF;
+      count = 0;
     }
   }
  #endif
