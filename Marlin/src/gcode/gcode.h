@@ -1337,6 +1337,9 @@ private:
   #endif
 
    static void M10002();
+   #ifdef ENV_CHARLIE
+   static void M10003();
+   #endif
 
   static void T(const int8_t tool_index) IF_DISABLED(HAS_TOOLCHANGE, { UNUSED(tool_index); });
 
