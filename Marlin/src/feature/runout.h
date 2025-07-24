@@ -162,7 +162,7 @@ class TFilamentMonitor : public FilamentMonitorBase {
         #endif
       #else
         const bool ran_out = bool(runout_flags);
-        uint8_t extruder = active_extruder;
+        // uint8_t extruder = active_extruder;
       #endif
 
       if(ran_out != was_runout || need_runout_state_print) {
@@ -177,6 +177,7 @@ class TFilamentMonitor : public FilamentMonitorBase {
       
       if (enabled && !filament_ran_out && should_monitor_runout()) {
         if (ran_out) {
+          SERIAL_ECHO_MSG("handling runout.");
           #if ENABLED(FILAMENT_RUNOUT_SENSOR_DEBUG)
             SERIAL_ECHOPGM("Runout Sensors: ");
             for (uint8_t i = 0; i < 8; ++i) SERIAL_CHAR('0' + char(runout_flags[i]));
@@ -184,7 +185,21 @@ class TFilamentMonitor : public FilamentMonitorBase {
           #endif
 
           filament_ran_out = true;
-          event_filament_runout(extruder);
+          // event_filament_runout(extruder);
+
+          SERIAL_ECHO_MSG("filament_out");
+          millis_t start = millis();
+          // Give ESP32 a chance to stop sending commands.
+          while(millis() - start < 1000) {
+            idle();
+          }
+          queue.clear();
+          SERIAL_ECHO_MSG("queue cleared");
+
+
+          
+
+          SERIAL_ECHO_MSG("synchronizing planner after runout event");
           planner.synchronize();
         }
       }

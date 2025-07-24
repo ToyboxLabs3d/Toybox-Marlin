@@ -33,6 +33,8 @@
 
 bool GCodeParser::volumetric_enabled;
 
+int32_t GCodeParser::line_number = -1;
+
 #if ENABLED(INCH_MODE_SUPPORT)
   float GCodeParser::linear_unit_factor, GCodeParser::volumetric_unit_factor;
 #endif
@@ -84,6 +86,7 @@ void GCodeParser::reset() {
     codebits = 0;                       // No codes yet
     //ZERO(param);                      // No parameters (should be safe to comment out this line)
   #endif
+  line_number = -1;                  // No line number
 }
 
 #if ENABLED(GCODE_QUOTED_STRINGS)
@@ -106,6 +109,11 @@ void GCodeParser::reset() {
 
 #endif
 
+
+int32_t GCodeParser::get_line_number(){
+  return line_number;
+}
+
 /**
  * Populate the command line state (command_letter, codenum, subcode, and string_arg)
  * by parsing a single line of G-Code. 58 bytes of SRAM are used to speed up seen/value.
@@ -124,6 +132,7 @@ void GCodeParser::parse(char *p) {
   // Skip N[-0-9] if included in the command line
   if (uppercase(*p) == 'N' && NUMERIC_SIGNED(p[1])) {
     //TERN_(FASTER_GCODE_PARSER, set('N', p + 1)); // (optional) Set the 'N' parameter value
+    line_number = atoi(p + 1); // Save the line number
     p += 2;                  // skip N[-0-9]
     while (NUMERIC(*p)) ++p; // skip [0-9]*
     while (*p == ' ')   ++p; // skip [ ]*

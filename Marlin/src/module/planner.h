@@ -294,6 +294,8 @@ typedef struct PlannerBlock {
     block_laser_t laser;
   #endif
 
+  int32_t line_number;                // The G-code line number for this block, if known
+
   void reset() { memset((char*)this, 0, sizeof(*this)); }
 
 } block_t;

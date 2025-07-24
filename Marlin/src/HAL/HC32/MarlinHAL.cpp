@@ -185,7 +185,21 @@ void MarlinHAL::idletask() {
     }
   #endif
   #ifdef ENV_CHARLIE
-  fake_filament_pin_state = (raw_HALL_ADC_value > 1600);
+  // fake_filament_pin_state = (raw_HALL_ADC_value > 1600);
+  static int in_between_count = 0;
+  if(raw_HALL_ADC_value > 1800) {
+    fake_filament_pin_state = true;
+    in_between_count = 0;
+  } else if(raw_HALL_ADC_value < 1400) {
+    fake_filament_pin_state = false;
+    in_between_count = 0;
+  } else {
+    in_between_count++;
+    if(in_between_count == 150000) {
+      SERIAL_ECHO_MSG("Hall ADC value in between for a long time: ", raw_HALL_ADC_value);
+      in_between_count = 0;
+    }
+  }
   if(hall_adc_debug == 1){
     static uint16_t highest_seen = 0;
     static uint16_t lowest_seen = 0xFFFF;
