@@ -45,6 +45,7 @@
 
 #include "motion.h"
 #include "../gcode/queue.h"
+#include <atomic>
 
 #if ENABLED(DELTA)
   #include "delta.h"
@@ -294,7 +295,7 @@ typedef struct PlannerBlock {
     block_laser_t laser;
   #endif
 
-  int32_t line_number;                // The G-code line number for this block, if known
+  int32_t line_number;              
 
   void reset() { memset((char*)this, 0, sizeof(*this)); }
 
@@ -554,8 +555,12 @@ class Planner {
       }
     #endif
 
-  private:
+    static std::atomic<bool> need_to_clear;
+    static std::atomic<int32_t> first_line_cleared;
 
+    private:
+    
+    static int32_t last_line_number_processed;
     /**
      * Speed of previous path line segment
      */

@@ -174,7 +174,12 @@ class TFilamentMonitor : public FilamentMonitorBase {
           SERIAL_ECHO_MSG("filament_loaded");
         }
       }
-      
+
+      int32_t first_line_cleared = planner.first_line_cleared.exchange(-1);
+      if(first_line_cleared != -1) {
+        SERIAL_ECHO_MSG("first_line_cleared: ", first_line_cleared);
+      }
+
       if (enabled && !filament_ran_out && should_monitor_runout()) {
         if (ran_out) {
           SERIAL_ECHO_MSG("handling runout.");
@@ -186,8 +191,9 @@ class TFilamentMonitor : public FilamentMonitorBase {
 
           filament_ran_out = true;
           // event_filament_runout(extruder);
+          planner.need_to_clear = true;
 
-          SERIAL_ECHO_MSG("filament_out");
+          SERIAL_ECHO_MSG("filament_runout");
           millis_t start = millis();
           // Give ESP32 a chance to stop sending commands.
           while(millis() - start < 1000) {
