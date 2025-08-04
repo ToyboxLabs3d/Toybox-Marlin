@@ -2312,7 +2312,9 @@
  *
  * Warning: Does not respect endstops!
  */
-//#define BABYSTEPPING
+#ifdef ENV_CHARLIE
+#define BABYSTEPPING
+#endif
 #if ENABLED(BABYSTEPPING)
   //#define EP_BABYSTEPPING                 // M293/M294 babystepping with EMERGENCY_PARSER support
   //#define BABYSTEP_WITHOUT_HOMING
@@ -2359,15 +2361,24 @@
  *
  * See https://marlinfw.org/docs/features/lin_advance.html for full instructions.
  */
-#ifdef ENV_ALPHA3
 #define LIN_ADVANCE
-#endif
+
 #if ENABLED(LIN_ADVANCE)
+#ifdef ENV_CHARLIE
+
   #if ENABLED(DISTINCT_E_FACTORS)
-    #define ADVANCE_K { 0.22 }    // (mm) Compression length per 1mm/s extruder speed, per extruder
+    #define ADVANCE_K { 0.03 }    // (mm) Compression length per 1mm/s extruder speed, per extruder
   #else
-    #define ADVANCE_K 0.02        // (mm) Compression length applying to all extruders
+    #define ADVANCE_K 0.03        // (mm) Compression length applying to all extruders
   #endif
+  #else 
+    #if ENABLED(DISTINCT_E_FACTORS)
+    #define ADVANCE_K { 0.03 }    // (mm) Compression length per 1mm/s extruder speed, per extruder
+  #else
+    #define ADVANCE_K 0.03        // (mm) Compression length applying to all extruders
+  #endif
+#endif
+
   //#define ADVANCE_K_EXTRA       // Add a second linear advance constant, configurable with M900 L.
   //#define LA_DEBUG              // Print debug information to serial during operation. Disable for production use.
   //#define EXPERIMENTAL_I2S_LA   // Allow I2S_STEPPER_STREAM to be used with LA. Performance degrades as the LA step rate reaches ~20kHz.
