@@ -3911,7 +3911,7 @@ void MarlinSettings::reset() {
 
     //
     // M149 Temperature units
-    //
+    //xterna
     #if ENABLED(TEMPERATURE_UNITS_SUPPORT)
       gcode.M149_report(forReplay);
     #else

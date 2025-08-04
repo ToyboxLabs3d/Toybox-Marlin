@@ -1355,9 +1355,9 @@
  *                                      X, Y, Z [, I [, J [, K...]]], E0 [, E1[, E2...]]
  */
 #ifdef ENV_CHARLIE
-  #define DEFAULT_MAX_ACCELERATION      { 18000, 18000, 1000, 5000 }
+  #define DEFAULT_MAX_ACCELERATION      { 18000, 18000, 100, 5000 }
 #elif defined(ENV_ALPHA3)
-  #define DEFAULT_MAX_ACCELERATION      { 5000, 5000, 1000, 5000 }
+  #define DEFAULT_MAX_ACCELERATION      { 5000, 5000, 100, 5000 }
 #else 
   #define DEFAULT_MAX_ACCELERATION      { 3000, 3000, 100, 10000 }
 #endif
@@ -1913,12 +1913,14 @@
  */
 //#define Z_IDLE_HEIGHT Z_HOME_POS
 
-//#define Z_CLEARANCE_FOR_HOMING  4   // (mm) Minimal Z height before homing (G28) for Z clearance above the bed, clamps, ...
+#ifdef ENV_ALPHA3
+#define Z_CLEARANCE_FOR_HOMING  2   // (mm) Minimal Z height before homing (G28) for Z clearance above the bed, clamps, ...
                                       // You'll need this much clearance above Z_MAX_POS to avoid grinding.
-
+#endif
 //#define Z_AFTER_HOMING         10   // (mm) Height to move to after homing (if Z was homed)
-//#define XY_AFTER_HOMING { 10, 10 }  // (mm) Move to an XY position after homing (and raising Z)
-
+#ifdef ENV_CHARLIE
+#define XY_AFTER_HOMING { 10, 1 }  // (mm) Move to an XY position after homing (and raising Z)
+#endif 
 //#define EVENT_GCODE_AFTER_HOMING "M300 P440 S200"  // Commands to run after G28 (and move to XY_AFTER_HOMING)
 
 // Direction of endstops when homing; 1=MAX, -1=MIN
@@ -2436,7 +2438,9 @@
  * - Allows Z homing only when XY positions are known and trusted.
  * - If stepper drivers sleep, XY homing may be required again before Z homing.
  */
-#define Z_SAFE_HOMING
+#ifdef ENV_CHARLIE
+  #define Z_SAFE_HOMING
+#endif
 
 #if ENABLED(Z_SAFE_HOMING)
   #define Z_SAFE_HOMING_X_POINT X_CENTER  // (mm) X point for Z homing
@@ -2454,8 +2458,9 @@
 //#define EDITABLE_HOMING_FEEDRATE
 
 // Validate that endstops are triggered on homing moves
+#ifdef ENV_CHARLIE
 #define VALIDATE_HOMING_ENDSTOPS
-
+#endif
 // @section calibrate
 
 /**
