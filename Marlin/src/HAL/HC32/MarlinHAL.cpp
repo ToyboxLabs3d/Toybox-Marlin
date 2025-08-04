@@ -188,10 +188,10 @@ void MarlinHAL::idletask() {
   // fake_filament_pin_state = (raw_HALL_ADC_value > 1600);
   static int in_between_count = 0;
   if(raw_HALL_ADC_value > 1800) {
-    fake_filament_pin_state = true;
+    fake_filament_pin_state = true; // filament out
     in_between_count = 0;
-  } else if(raw_HALL_ADC_value < 1400) {
-    fake_filament_pin_state = false;
+  } else if(raw_HALL_ADC_value < 1500) {
+    fake_filament_pin_state = false; // filament present
     in_between_count = 0;
   } else {
     in_between_count++;
