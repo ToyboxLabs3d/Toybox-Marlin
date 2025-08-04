@@ -2362,6 +2362,7 @@
  * See https://marlinfw.org/docs/features/lin_advance.html for full instructions.
  */
 #define LIN_ADVANCE
+
 #if ENABLED(LIN_ADVANCE)
 #ifdef ENV_CHARLIE
 
@@ -2464,7 +2465,7 @@
  * Stop after G29_MAX_RETRIES attempts.
  */
 #ifdef ENV_CHARLIE
-#define G29_RETRY_AND_RECOVER
+  #define G29_RETRY_AND_RECOVER
 #endif
 #if ENABLED(G29_RETRY_AND_RECOVER)
   #define G29_MAX_RETRIES 3
