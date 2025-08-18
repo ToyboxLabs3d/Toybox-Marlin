@@ -237,7 +237,7 @@ void GCodeQueue::enqueue_now_P(PGM_P const pgcode) {
  *   P<int>  Planner space remaining
  *   B<int>  Block queue space remaining
  */
-void GCodeQueue::RingBuffer::ok_to_send() {
+void GCodeQueue::RingBuffer::ok_to_send(long *line_number /*= nullptr*/) {
   #if NO_TIMEOUTS > 0
     // Start counting from the last command's execution
     last_command_time = millis();
@@ -248,14 +248,19 @@ void GCodeQueue::RingBuffer::ok_to_send() {
     if (!serial_ind.valid()) return;              // Optimization here, skip processing if it's not going anywhere
     PORT_REDIRECT(SERIAL_PORTMASK(serial_ind));   // Reply to the serial port that sent the command
   #endif
-  if (command.skip_ok) return;
+  if (line_number == nullptr && command.skip_ok) return;
   SERIAL_ECHOPGM(STR_OK);
   #if ENABLED(ADVANCED_OK)
-    char* p = command.buffer;
-    if (*p == 'N') {
-      SERIAL_CHAR(' ', *p++);
-      while (NUMERIC_SIGNED(*p))
-        SERIAL_CHAR(*p++);
+    if(line_number == nullptr){
+      char* p = command.buffer;
+      if (*p == 'N') {
+        SERIAL_CHAR(' ', *p++);
+        while (NUMERIC_SIGNED(*p))
+          SERIAL_CHAR(*p++);
+      }
+    }else{
+      SERIAL_CHAR(' ', 'N');
+      SERIAL_PRINT(*line_number, PrintBase::Dec);
     }
     SERIAL_ECHOPGM_P(SP_P_STR, planner.moves_free(), SP_B_STR, BUFSIZE - length);
   #endif
@@ -476,19 +481,30 @@ void GCodeQueue::get_serial_commands() {
 
           const bool M110 = !!strstr_P(command, PSTR("M110"));
 
-          if (M110) {
-            char* n2pos = strchr(command + 4, 'N');
-            if (n2pos) npos = n2pos;
-          }
+          // ToyboxAlex: This is dumb, it stops us from using line number checking 
+          // with M110
+          // if (M110) {
+            // char* n2pos = strchr(command + 4, 'N');
+          //   if (n2pos) npos = n2pos;
+          // }
 
-          const long gcode_N = strtol(npos + 1, nullptr, 10);
+          // ToyboxAlex: We don't need to check if we received a valid line number, as long as we are using checksums
+          long gcode_N = strtol(npos + 1, nullptr, 10);
 
           // The line number must be in the correct sequence.
-          if (gcode_N != serial.last_N + 1 && !M110) {
+          if (gcode_N != serial.last_N + 1 /* && !M110 */ /* ToyboxAlex: wtf is the point of && !M110? 
+            It makes serial less robust if the printer handler is implemented correctly.
+            It means if the line before M110 is missed we will skip it without noticing. */) 
+          {
             // A request-for-resend line was already in transit so we got two - oops!
-            if (WITHIN(gcode_N, serial.last_N - 1, serial.last_N)) continue;
+            if (WITHIN(gcode_N, serial.last_N - 1, serial.last_N)){ 
+              SERIAL_ECHO_MSG("Sending duplicate okay for line number ", gcode_N);
+              ok_to_send(&gcode_N);
+              continue;
+            }
             // A corrupted line or too high, indicating a lost line
             gcode_line_error(F(STR_ERR_LINE_NO), p);
+            SERIAL_ECHOLNPGM(" N", gcode_N, " expected N", serial.last_N + 1);
             break;
           }
 
@@ -506,7 +522,21 @@ void GCodeQueue::get_serial_commands() {
             break;
           }
 
-          serial.last_N = gcode_N;
+          // ToyboxAlex: Do this here so we can use line number checking with M110
+          if (M110) {
+            char* n2pos = strchr(command + 4, 'N');
+            if (n2pos) {
+              // npos = n2pos;
+              char* endptr;
+              long n2 = strtol(n2pos + 1, &endptr, 10);
+              if(endptr != n2pos + 1) {
+                // Successfully parsed N2
+                serial.last_N = n2;
+              }
+            }
+          }else{
+            serial.last_N = gcode_N;
+          }
         }
         #if HAS_MEDIA
           // Pronterface "M29" and "M29 " has no line number
