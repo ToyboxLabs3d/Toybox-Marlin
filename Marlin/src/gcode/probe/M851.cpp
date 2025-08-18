@@ -40,7 +40,11 @@ void GcodeSuite::M851() {
 
   // Assume no errors
   bool ok = true;
-
+  if(parser.seenval('Q'))
+  {
+    set_bed_leveling_enabled(false);
+    set_axis_never_homed(Z_AXIS);
+  }
   if (parser.seenval('X')) {
     const float x = parser.value_float();
     #if HAS_PROBE_XY_OFFSET

@@ -89,7 +89,7 @@ public:
       OPTARG(HAS_MULTI_SERIAL, serial_index_t serial_ind=serial_index_t())
     );
 
-    void ok_to_send();
+    void ok_to_send(long *line_number = nullptr);
 
     inline bool full(uint8_t cmdCount=1) const { return length > (BUFSIZE - cmdCount); }
 
@@ -195,7 +195,7 @@ public:
    *   P<int>  Planner space remaining
    *   B<int>  Block queue space remaining
    */
-  static void ok_to_send() { ring_buffer.ok_to_send(); }
+  static void ok_to_send(long *line_number = nullptr) { ring_buffer.ok_to_send(line_number); }
 
   /**
    * Clear the serial line and request a resend of
