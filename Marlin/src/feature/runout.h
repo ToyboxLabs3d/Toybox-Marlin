@@ -201,12 +201,13 @@ class TFilamentMonitor : public FilamentMonitorBase {
           }
           queue.clear();
           SERIAL_ECHO_MSG("queue cleared");
-
-
-          
-
-          SERIAL_ECHO_MSG("synchronizing planner after runout event");
+          while (SERIAL_IMPL.available(0)) { 
+            SERIAL_IMPL.read(0);
+          }
+          SERIAL_ECHO_MSG("serial flushed");
           planner.synchronize();
+          SERIAL_ECHO_MSG("synchronized planner after runout event");
+          SERIAL_ECHO_MSG("synced_after_runout");
         }
       }
     }
