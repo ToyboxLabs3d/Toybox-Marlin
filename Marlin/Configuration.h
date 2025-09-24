@@ -69,17 +69,17 @@
 // @section machine
 
 // Choose the name from boards.h that matches your setup
-#ifndef MOTHERBOARD
+ #ifndef MOTHERBOARD
 
-  #ifdef ENV_CHARLIE
-    #define MOTHERBOARD BOARD_ESP32_HC_V4_1 
-  #elif defined(ENV_ALPHA3)
-    #define MOTHERBOARD BOARD_ESP32_HC_V1_5  
-  #else 
-    #define MOTHERBOARD BOARD_RAMPS_14_EFB
-  #endif
+   #ifdef ENV_CHARLIE
+     #define MOTHERBOARD BOARD_ESP32_HC_V4_1 
+   #elif defined(ENV_ALPHA3)
+     #define MOTHERBOARD BOARD_ESP32_HC_V1_5  
+   #else 
+     #define MOTHERBOARD BOARD_RAMPS_14_EFB
+   #endif
 
-#endif
+ #endif
 
 // @section serial
 
@@ -584,10 +584,12 @@
 #define TEMP_SENSOR_5 0
 #define TEMP_SENSOR_6 0
 #define TEMP_SENSOR_7 0
-#ifdef ENV_ALPHA3
-  #define TEMP_SENSOR_BED 0
-#elif defined(ENV_CHARLIE)
-  #define TEMP_SENSOR_BED 1
+#ifdef ENV_CHARLIE
+    #define TEMP_SENSOR_BED 0 // Alex TODO: put this back when we get the heated bed back.
+#elif defined(ENV_ALPHA3)
+    #define TEMP_SENSOR_BED 0
+#else
+    #define TEMP_SENSOR_BED 0
 #endif
 #define TEMP_SENSOR_PROBE 0
 #define TEMP_SENSOR_CHAMBER 0
@@ -619,13 +621,13 @@
 #endif
 
 #if HAS_E_TEMP_SENSOR
-  #define TEMP_RESIDENCY_TIME         10  // (seconds) Time to wait for hotend to "settle" in M109
-  #define TEMP_WINDOW                  1  // (°C) Temperature proximity for the "temperature reached" timer
+  #define TEMP_RESIDENCY_TIME         5  // (seconds) Time to wait for hotend to "settle" in M109
+  #define TEMP_WINDOW                  3  // (°C) Temperature proximity for the "temperature reached" timer
   #define TEMP_HYSTERESIS              3  // (°C) Temperature proximity considered "close enough" to the target
 #endif
 
 #if TEMP_SENSOR_BED
-  #define TEMP_BED_RESIDENCY_TIME      2  // (seconds) Time to wait for bed to "settle" in M190
+  #define TEMP_BED_RESIDENCY_TIME     10  // (seconds) Time to wait for bed to "settle" in M190
   #define TEMP_BED_WINDOW              1  // (°C) Temperature proximity for the "temperature reached" timer
   #define TEMP_BED_HYSTERESIS          3  // (°C) Temperature proximity considered "close enough" to the target
 #endif
@@ -720,15 +722,19 @@
     #define DEFAULT_Ki_LIST {   1.08,   1.08 }
     #define DEFAULT_Kd_LIST { 114.00, 114.00 }
   #else
-    #ifdef ENV_ALPHA3
-      #define DEFAULT_Kp  22.20
-      #define DEFAULT_Ki   1.08
-      #define DEFAULT_Kd 114.00
-    #elif defined(ENV_CHARLIE)
-        #define DEFAULT_Kp  36.144//22.20
-        #define DEFAULT_Ki  5.877//1.08
-        #define DEFAULT_Kd 55.572//114.00
-    #endif
+  	#ifdef ENV_CHARLIE
+      #define DEFAULT_Kp 28.205
+      #define DEFAULT_Ki 5.530
+      #define DEFAULT_Kd 35.961
+	#elif defined(ENV_ALPHA3)
+        #define DEFAULT_Kp  22.20
+        #define DEFAULT_Ki   1.08
+        #define DEFAULT_Kd 114.00	
+	#else
+        #define DEFAULT_Kp  22.20
+        #define DEFAULT_Ki   1.08
+        #define DEFAULT_Kd 114.00	
+	#endif
   #endif
 #else
   #define BANG_MAX 255    // Limit hotend current while in bang-bang mode; 255=full current
@@ -811,7 +817,7 @@
  *
  * With this option disabled, bang-bang will be used. BED_LIMIT_SWITCHING enables hysteresis.
  */
-//#define PIDTEMPBED
+#define PIDTEMPBED
 
 #if ENABLED(PIDTEMPBED)
   //#define MIN_BED_POWER 0
@@ -819,9 +825,9 @@
 
   // 120V 250W silicone heater into 4mm borosilicate (MendelMax 1.5+)
   // from FOPDT model - kp=.39 Tp=405 Tdead=66, Tc set to 79.2, aggressive factor of .15 (vs .1, 1, 10)
-  #define DEFAULT_bedKp 10.00
-  #define DEFAULT_bedKi .023
-  #define DEFAULT_bedKd 305.4
+  #define DEFAULT_bedKp 44.81
+  #define DEFAULT_bedKi 3.64
+  #define DEFAULT_bedKd 368.18  
 
   // FIND YOUR OWN: "M303 E-1 C8 S90" to run autotune on the bed at 90 degreesC for 8 cycles.
 #else
@@ -1264,11 +1270,7 @@
 #define V_MAX_ENDSTOP_HIT_STATE HIGH
 #define W_MIN_ENDSTOP_HIT_STATE HIGH
 #define W_MAX_ENDSTOP_HIT_STATE HIGH
-#ifdef ENV_ALPHA3
-  #define Z_MIN_PROBE_ENDSTOP_HIT_STATE HIGH
-#elif defined(ENV_CHARLIE)
-  #define Z_MIN_PROBE_ENDSTOP_HIT_STATE LOW // Charlie uses a normally closed Z probe
-#endif
+#define Z_MIN_PROBE_ENDSTOP_HIT_STATE LOW
 
 // Enable this feature if all enabled endstop pins are interrupt-capable.
 // This will remove the need to poll the interrupt pins, saving many CPU cycles.
@@ -1319,9 +1321,11 @@
 
 
 #ifdef ENV_CHARLIE
-  #define DEFAULT_AXIS_STEPS_PER_UNIT   { 94.1, 94.1, 400, 692.919 }
+  #define DEFAULT_AXIS_STEPS_PER_UNIT   { 94.1, 94.1, 800, 702.2 } //729.38
 #elif defined(ENV_ALPHA3)
-  #define DEFAULT_AXIS_STEPS_PER_UNIT   { 94.15, 94.15, 400, 90 }
+  #define DEFAULT_AXIS_STEPS_PER_UNIT   { 94.15, 94.15, 399.5, 90 }
+#else 
+  #define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 400, 500 }
 #endif
 
 /**
@@ -1336,7 +1340,7 @@
  */
 
 #ifdef ENV_CHARLIE
-  #define DEFAULT_MAX_FEEDRATE          { 350, 350, 10, 30 }
+  #define DEFAULT_MAX_FEEDRATE          { 300, 300, 15, 30 }
 #elif defined(ENV_ALPHA3)
   #define DEFAULT_MAX_FEEDRATE          { 300, 300, 10, 100 }
 #else 
@@ -1355,7 +1359,8 @@
  *                                      X, Y, Z [, I [, J [, K...]]], E0 [, E1[, E2...]]
  */
 #ifdef ENV_CHARLIE
-  #define DEFAULT_MAX_ACCELERATION      { 18000, 18000, 100, 5000 }
+  #define DEFAULT_MAX_ACCELERATION      { 3000, 3000, 1000, 5000 }
+ // #define DEFAULT_MAX_ACCELERATION      { 10000, 10000, 1000, 5000 }
 #elif defined(ENV_ALPHA3)
   #define DEFAULT_MAX_ACCELERATION      { 5000, 5000, 100, 5000 }
 #else 
@@ -1376,9 +1381,19 @@
  *   M204 R    Retract Acceleration
  *   M204 T    Travel Acceleration
  */
-#define DEFAULT_ACCELERATION          5000    // X, Y, Z and E acceleration for printing moves
-#define DEFAULT_RETRACT_ACCELERATION  1000    // E acceleration for retracts
-#define DEFAULT_TRAVEL_ACCELERATION   6000    // X, Y, Z acceleration for travel (non printing) moves
+
+#ifdef ENV_CHARLIE
+  #define DEFAULT_ACCELERATION          2000    // X, Y, Z and E acceleration for printing moves
+  #define DEFAULT_RETRACT_ACCELERATION  5000     // E acceleration for retracts
+  #define DEFAULT_TRAVEL_ACCELERATION   2000    // X, Y, Z acceleration for travel (non printing) moves
+#elif defined(ENV_ALPHA3)
+  #define DEFAULT_ACCELERATION          5000    // X, Y, Z and E acceleration for printing moves
+  #define DEFAULT_RETRACT_ACCELERATION  1000    // E acceleration for retracts
+  #define DEFAULT_TRAVEL_ACCELERATION   6000    // X, Y, Z acceleration for travel (non printing) moves
+#endif
+// #define DEFAULT_ACCELERATION          10000    // X, Y, Z and E acceleration for printing moves
+// #define DEFAULT_RETRACT_ACCELERATION  3000    // E acceleration for retracts
+// #define DEFAULT_TRAVEL_ACCELERATION   10000    // X, Y, Z acceleration for travel (non printing) moves
 
 /**
  * Default Jerk limits (mm/s)
@@ -1388,7 +1403,7 @@
  * When changing speed and direction, if the difference is less than the
  * value set here, it may happen instantaneously.
  */
-//#define CLASSIC_JERK
+// #define CLASSIC_JERK
 #if ENABLED(CLASSIC_JERK)
   #define DEFAULT_XJERK 10.0
   #define DEFAULT_YJERK 10.0
@@ -1447,6 +1462,7 @@
  * (Automatically enables USE_PROBE_FOR_Z_HOMING.)
  */
 #define Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN
+
 // Force the use of the probe for Z-axis homing
 //#define USE_PROBE_FOR_Z_HOMING
 
@@ -1684,12 +1700,10 @@
  *     O-- FRONT --+
  */
 #ifdef ENV_ALPHA3
-  #define NOZZLE_TO_PROBE_OFFSET { 10, 10, 0 }
+#define NOZZLE_TO_PROBE_OFFSET { 10, 10, 0 }
 #elif defined(ENV_CHARLIE)
-  #define NOZZLE_TO_PROBE_OFFSET { 0, 25, -2.9 }
+#define NOZZLE_TO_PROBE_OFFSET { 11, 23, -2 }
 #endif
-
-
 
 // Enable and set to use a specific tool for probing. Disable to allow any tool.
 #define PROBING_TOOL 0
@@ -1702,18 +1716,18 @@
 #ifdef ENV_ALPHA3
   #define PROBING_MARGIN 10
 #elif defined(ENV_CHARLIE)
-  #define PROBING_MARGIN 10
+  #define PROBING_MARGIN 5
 #endif
 
 // X and Y axis travel speed between probes.
 // Leave undefined to use the average of the current XY homing feedrate.
-#define XY_PROBE_FEEDRATE    (350*60) // (mm/min)
+#define XY_PROBE_FEEDRATE    (200*60) // (mm/min)
 
 // Feedrate for the first approach when double-probing (MULTIPLE_PROBING == 2)
-#define Z_PROBE_FEEDRATE_FAST  (10*60) // (mm/min)
+#define Z_PROBE_FEEDRATE_FAST  (5*60) // (mm/min)
 
 // Feedrate for the "accurate" probe of each point
-#define Z_PROBE_FEEDRATE_SLOW (4*60) // (mm/min)
+#define Z_PROBE_FEEDRATE_SLOW (Z_PROBE_FEEDRATE_FAST / 2) // (mm/min)
 
 /**
  * Probe Activation Switch
@@ -1778,21 +1792,21 @@
  * Example: 'M851 Z-5' with a CLEARANCE of 4  =>  9mm from bed to nozzle.
  *     But: 'M851 Z+1' with a CLEARANCE of 2  =>  2mm from bed to nozzle.
  */
-#define Z_CLEARANCE_DEPLOY_PROBE   5 // (mm) Z Clearance for Deploy/Stow
-#define Z_CLEARANCE_BETWEEN_PROBES  2 // (mm) Z Clearance between probe points
-#define Z_CLEARANCE_MULTI_PROBE     2 // (mm) Z Clearance between multiple probes
-#define Z_PROBE_ERROR_TOLERANCE     5 // (mm) Tolerance for early trigger (<= -probe.offset.z + ZPET)
+#define Z_CLEARANCE_DEPLOY_PROBE   10 // (mm) Z Clearance for Deploy/Stow
+#define Z_CLEARANCE_BETWEEN_PROBES  5 // (mm) Z Clearance between probe points
+#define Z_CLEARANCE_MULTI_PROBE     5 // (mm) Z Clearance between multiple probes
+#define Z_PROBE_ERROR_TOLERANCE     3 // (mm) Tolerance for early trigger (<= -probe.offset.z + ZPET)
 //#define Z_AFTER_PROBING           5 // (mm) Z position after probing is done
 
-#define Z_PROBE_LOW_POINT          -3 // (mm) Farthest distance below the trigger-point to go before stopping
+#define Z_PROBE_LOW_POINT          -2 // (mm) Farthest distance below the trigger-point to go before stopping
 
 // For M851 provide ranges for adjusting the X, Y, and Z probe offsets
 //#define PROBE_OFFSET_XMIN -50   // (mm)
 //#define PROBE_OFFSET_XMAX  50   // (mm)
 //#define PROBE_OFFSET_YMIN -50   // (mm)
 //#define PROBE_OFFSET_YMAX  50   // (mm)
-//#define PROBE_OFFSET_ZMIN -20   // (mm)
-//#define PROBE_OFFSET_ZMAX  20   // (mm)
+#define PROBE_OFFSET_ZMIN -10   // (mm)
+#define PROBE_OFFSET_ZMAX  10   // (mm)
 
 // Enable the M48 repeatability test to test probe accuracy
 //#define Z_MIN_PROBE_REPEATABILITY_TEST
@@ -1915,12 +1929,11 @@
 
 #ifdef ENV_ALPHA3
 #define Z_CLEARANCE_FOR_HOMING  2   // (mm) Minimal Z height before homing (G28) for Z clearance above the bed, clamps, ...
-                                      // You'll need this much clearance above Z_MAX_POS to avoid grinding.
-#endif
+#endif                                      // You'll need this much clearance above Z_MAX_POS to avoid grinding.
+
 //#define Z_AFTER_HOMING         10   // (mm) Height to move to after homing (if Z was homed)
-// #ifdef ENV_CHARLIE
-// #define XY_AFTER_HOMING { 10, 1 }  // (mm) Move to an XY position after homing (and raising Z)
-// #endif 
+//#define XY_AFTER_HOMING { 10, 10 }  // (mm) Move to an XY position after homing (and raising Z)
+
 //#define EVENT_GCODE_AFTER_HOMING "M300 P440 S200"  // Commands to run after G28 (and move to XY_AFTER_HOMING)
 
 // Direction of endstops when homing; 1=MAX, -1=MIN
@@ -1957,7 +1970,7 @@
 
 #ifdef ENV_CHARLIE
   #define X_BED_SIZE 190
-  #define Y_BED_SIZE 185
+  #define Y_BED_SIZE 190
 #elif defined(ENV_ALPHA3)
   #define X_BED_SIZE 80
   #define Y_BED_SIZE 80
@@ -1968,15 +1981,10 @@
 
 // Travel limits (linear=mm, rotational=°) after homing, corresponding to endstop positions.
 #define X_MIN_POS 0
-#ifdef ENV_CHARLIE
 #define Y_MIN_POS 0
-#else
-#define Y_MIN_POS 0
-#endif
 #define Z_MIN_POS 0
-
 #define X_MAX_POS X_BED_SIZE
-#define Y_MAX_POS (Y_BED_SIZE + Y_MIN_POS)
+#define Y_MAX_POS Y_BED_SIZE
 
 #ifdef ENV_CHARLIE
   #define Z_MAX_POS 190
@@ -2285,7 +2293,7 @@
 #if ANY(AUTO_BED_LEVELING_LINEAR, AUTO_BED_LEVELING_BILINEAR)
 
   // Set the number of grid points per dimension.
-  #define GRID_MAX_POINTS_X 5
+  #define GRID_MAX_POINTS_X 6
   #define GRID_MAX_POINTS_Y GRID_MAX_POINTS_X
 
   // Probe along the Y axis, advancing X after each column
@@ -2295,7 +2303,7 @@
 
     // Beyond the probed grid, continue the implied tilt?
     // Default is to maintain the height of the nearest edge.
-    #define EXTRAPOLATE_BEYOND_GRID
+    //#define EXTRAPOLATE_BEYOND_GRID
 
     //
     // Subdivision of the grid by Catmull-Rom method.
@@ -2450,7 +2458,7 @@
 
 // Homing speeds (linear=mm/min, rotational=°/min)
 #ifdef ENV_CHARLIE
-#define HOMING_FEEDRATE_MM_M { (50*60), (50*60), (10*60) } // X, Y, Z
+#define HOMING_FEEDRATE_MM_M { (50*60), (50*60), (4*60) } // X, Y, Z
 #else
 #define HOMING_FEEDRATE_MM_M { (50*60), (50*60), (4*60) }
 #endif
@@ -2597,14 +2605,12 @@
  *    P1  Raise the nozzle always to Z-park height.
  *    P2  Raise the nozzle by Z-park amount, limited to Z_MAX_POS.
  */
-#ifdef ENV_CHARLIE
+//#define NOZZLE_PARK_FEATURE
 
-#define NOZZLE_PARK_FEATURE
-#endif
 #if ENABLED(NOZZLE_PARK_FEATURE)
   // Specify a park position as { X, Y, Z_raise }
-  #define NOZZLE_PARK_POINT { (X_MIN_POS + 1), (Y_MIN_POS + 1), 20 }
-  #define NOZZLE_PARK_MOVE          4   // Park motion: 0 = XY Move, 1 = X Only, 2 = Y Only, 3 = X before Y, 4 = Y before X
+  #define NOZZLE_PARK_POINT { (X_MIN_POS + 10), (Y_MAX_POS - 10), 20 }
+  #define NOZZLE_PARK_MOVE          0   // Park motion: 0 = XY Move, 1 = X Only, 2 = Y Only, 3 = X before Y, 4 = Y before X
   #define NOZZLE_PARK_Z_RAISE_MIN   2   // (mm) Always raise Z by at least this distance
   #define NOZZLE_PARK_XY_FEEDRATE 100   // (mm/s) X and Y axes feedrate (also used for delta Z axis)
   #define NOZZLE_PARK_Z_FEEDRATE    5   // (mm/s) Z axis feedrate (not used for delta printers)
@@ -2648,18 +2654,17 @@
  *
  *   Caveats: The ending Z should be the same as starting Z.
  */
-#ifdef ENV_CHARLIE
-#define NOZZLE_CLEAN_FEATURE
-#endif
+//#define NOZZLE_CLEAN_FEATURE
+
 #if ENABLED(NOZZLE_CLEAN_FEATURE)
   #define NOZZLE_CLEAN_PATTERN_LINE     // Provide 'G12 P0' - a simple linear cleaning pattern
-//  #define NOZZLE_CLEAN_PATTERN_ZIGZAG   // Provide 'G12 P1' - a zigzag cleaning pattern
-  //#define NOZZLE_CLEAN_PATTERN_CIRCLE   // Provide 'G12 P2' - a circular cleaning pattern
+  #define NOZZLE_CLEAN_PATTERN_ZIGZAG   // Provide 'G12 P1' - a zigzag cleaning pattern
+  #define NOZZLE_CLEAN_PATTERN_CIRCLE   // Provide 'G12 P2' - a circular cleaning pattern
 
   // Default pattern to use when 'P' is not provided to G12. One of the enabled options above.
   #define NOZZLE_CLEAN_DEFAULT_PATTERN 0
 
-  #define NOZZLE_CLEAN_STROKES     10   // Default number of pattern repetitions
+  #define NOZZLE_CLEAN_STROKES     12   // Default number of pattern repetitions
 
   #if ENABLED(NOZZLE_CLEAN_PATTERN_ZIGZAG)
     #define NOZZLE_CLEAN_TRIANGLES  3   // Default number of triangles
@@ -2667,9 +2672,9 @@
 
   // Specify positions for each tool as { { X, Y, Z }, { X, Y, Z } }
   // Dual hotend system may use { {  -20, (Y_BED_SIZE / 2), (Z_MIN_POS + 1) },  {  420, (Y_BED_SIZE / 2), (Z_MIN_POS + 1) }}
-  #define NOZZLE_CLEAN_START_POINT { {  155, 185, (Z_MIN_POS + 1) } }
-  #define NOZZLE_CLEAN_END_POINT   { { 175, 185, (Z_MIN_POS + 1) } }
-  #define CLEAN_FEEDRATE 350
+  #define NOZZLE_CLEAN_START_POINT { {  30, 30, (Z_MIN_POS + 1) } }
+  #define NOZZLE_CLEAN_END_POINT   { { 100, 60, (Z_MIN_POS + 1) } }
+
   #if ENABLED(NOZZLE_CLEAN_PATTERN_CIRCLE)
     #define NOZZLE_CLEAN_CIRCLE_RADIUS 6.5                      // (mm) Circular pattern radius
     #define NOZZLE_CLEAN_CIRCLE_FN 10                           // Circular pattern circle number of segments
@@ -2677,10 +2682,10 @@
   #endif
 
   // Move the nozzle to the initial position after cleaning
-//  #define NOZZLE_CLEAN_GOBACK
+  #define NOZZLE_CLEAN_GOBACK
 
   // For a purge/clean station that's always at the gantry height (thus no Z move)
-  #define NOZZLE_CLEAN_NO_Z
+  //#define NOZZLE_CLEAN_NO_Z
 
   // For a purge/clean station mounted on the X axis
   //#define NOZZLE_CLEAN_NO_Y
@@ -2690,7 +2695,7 @@
   //#define NOZZLE_CLEAN_HEATUP       // Heat up the nozzle instead of skipping wipe
 
   // Explicit wipe G-code script applies to a G12 with no arguments.
-  //#define WIPE_SEQUENCE_COMMANDS "G90\nG1 F21000 X150 Y180 \nG1 X180\nG1 X150\nG1 X180\nG1 X150\nG1 X180\nG1 X150\nG1 X180\nG1 X150\nG1 X180\n"
+  //#define WIPE_SEQUENCE_COMMANDS "G1 X-17 Y25 Z10 F4000\nG1 Z1\nM114\nG1 X-17 Y25\nG1 X-17 Y95\nG1 X-17 Y25\nG1 X-17 Y95\nG1 X-17 Y25\nG1 X-17 Y95\nG1 X-17 Y25\nG1 X-17 Y95\nG1 X-17 Y25\nG1 X-17 Y95\nG1 X-17 Y25\nG1 X-17 Y95\nG1 Z15\nM400\nG0 X-10.0 Y-9.0"
 
 #endif
 
