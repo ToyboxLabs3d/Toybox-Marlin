@@ -1593,7 +1593,7 @@
   //#define MANUAL_MOVE_DISTANCE_IN          1.000, 0.500, 0.100, 0.010, 0.001  // (in)
   //#define MANUAL_MOVE_DISTANCE_IN   5.000, 1.000, 0.500, 0.100, 0.010, 0.001  // (in)
 
-  // Manual move distances for rotational axesF
+  // Manual move distances for rotational axes
   #define MANUAL_MOVE_DISTANCE_DEG             90, 45, 22.5, 5, 1  // (°)
 
   // BACK menu items keep the highlight at the top
@@ -2440,12 +2440,10 @@
  * the probe to be unable to reach any points.
  */
 #if PROBE_SELECTED && !IS_KINEMATIC
-  #ifdef ENV_CHARLIE
-    #define PROBING_MARGIN_LEFT 15
-    #define PROBING_MARGIN_RIGHT 15
-    #define PROBING_MARGIN_FRONT 15
-    #define PROBING_MARGIN_BACK 15
-#endif
+  // #define PROBING_MARGIN_LEFT PROBING_MARGIN
+  // #define PROBING_MARGIN_RIGHT PROBING_MARGIN
+  // #define PROBING_MARGIN_FRONT PROBING_MARGIN
+  // #define PROBING_MARGIN_BACK PROBING_MARGIN
 #endif
 
 #if ANY(MESH_BED_LEVELING, AUTO_BED_LEVELING_UBL)
@@ -2469,7 +2467,7 @@
 #endif
 #if ENABLED(G29_RETRY_AND_RECOVER)
   #define G29_MAX_RETRIES 3
- // #define G29_HALT_ON_FAILURE
+  #define G29_HALT_ON_FAILURE
   /**
    * Specify the GCODE commands that will be executed when leveling succeeds,
    * between attempts, and after the maximum number of retries have been tried.
@@ -2952,10 +2950,7 @@
  *
  * Enable PARK_HEAD_ON_PAUSE to add the G-code M125 Pause and Park.
  */
-#ifdef ENV_CHARLIE
-#define ADVANCED_PAUSE_FEATURE
-
-#endif
+//#define ADVANCED_PAUSE_FEATURE
 #if ENABLED(ADVANCED_PAUSE_FEATURE)
   #define PAUSE_PARK_RETRACT_FEEDRATE         60  // (mm/s) Initial retract feedrate.
   #define PAUSE_PARK_RETRACT_LENGTH            2  // (mm) Initial retract.
