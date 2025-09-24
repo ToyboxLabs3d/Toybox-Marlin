@@ -957,7 +957,7 @@
 #define HOMING_BACKOFF_POST_MM { 5, 0, 0 }  // (linear=mm, rotational=°) Backoff from endstops after homing
 //#define XY_COUNTERPART_BACKOFF_MM 0         // (mm) Backoff X after homing Y, and vice-versa
 #ifdef ENV_CHARLIE
-#define HOME_X_BEFORE_Y
+#define HOME_X_BEFORE_Y // home X before Y so we don't go over the wiper in the wrong direction.
 #else
 #define QUICK_HOME                          // If G28 contains XY do a diagonal move first
 #endif
