@@ -152,13 +152,13 @@ void MarlinHAL::delay_ms(const int ms) {
   delay(ms);
 }
 
-#ifdef ENV_CHARLIE
+#if HAS_FILAMENT_SENSOR
   extern uint32_t raw_HALL_ADC_value;
   uint32_t tick_t=0;
   uint8_t hall_adc_debug=0;
+  bool fake_filament_pin_state = false;
 #endif
 
-bool fake_filament_pin_state = false;
 
 void MarlinHAL::idletask() {
   #if ENABLED(MARLIN_DEV_MODE)
@@ -184,7 +184,7 @@ void MarlinHAL::idletask() {
       }
     }
   #endif
-  #ifdef ENV_CHARLIE
+  #if HAS_FILAMENT_SENSOR
   // fake_filament_pin_state = (raw_HALL_ADC_value > 1600);
   static int in_between_count = 0;
   if(raw_HALL_ADC_value > 1800) {

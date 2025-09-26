@@ -1337,7 +1337,7 @@ private:
   #endif
 
    static void M10002();
-   #ifdef ENV_CHARLIE
+   #if HAS_FILAMENT_SENSOR
    static void M10003();
    #endif
 

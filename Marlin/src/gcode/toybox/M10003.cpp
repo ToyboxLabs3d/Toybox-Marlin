@@ -1,5 +1,5 @@
 
-#ifdef ENV_CHARLIE
+#if HAS_FILAMENT_SENSOR
 
 #include "../gcode.h"
 #include "../queue.h"

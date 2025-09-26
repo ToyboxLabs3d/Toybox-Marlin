@@ -3133,9 +3133,7 @@ void Temperature::init() {
   TERN_(HAS_ADC_BUTTONS,        hal.adc_enable(ADC_KEYPAD_PIN));
   TERN_(POWER_MONITOR_CURRENT,  hal.adc_enable(POWER_MONITOR_CURRENT_PIN));
   TERN_(POWER_MONITOR_VOLTAGE,  hal.adc_enable(POWER_MONITOR_VOLTAGE_PIN));
-#ifdef ENV_CHARLIE
-  TERN_(HAS_HALL_SENSOR,       hal.adc_enable(FIL_HALL_PIN)); //halL
-#endif
+  TERN_(HAS_HALL_SENSOR,       hal.adc_enable(FIL_HALL_PIN));
 
   #if HAS_JOY_ADC_EN
     SET_INPUT_PULLUP(JOY_EN_PIN);

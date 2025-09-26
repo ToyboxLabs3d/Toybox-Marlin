@@ -1158,7 +1158,7 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
         #endif
       #endif
       case 10002: M10002(); break;                              // M10002
-      #ifdef ENV_CHARLIE
+      #if HAS_FILAMENT_SENSOR
       case 10003: M10003(); break;                              // M10003
       #endif
       default: parser.unknown_command_warning(); break;

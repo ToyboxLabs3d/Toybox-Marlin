@@ -30,7 +30,7 @@
 #include <drivers/gpio/gpio.h>
 
 
-#ifdef ENV_CHARLIE
+#if HAS_FILAMENT_SENSOR
   extern uint32_t raw_HALL_ADC_value;
   extern bool simulate_filament_runout;
   extern bool fake_filament_pin_state;
