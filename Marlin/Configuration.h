@@ -585,7 +585,7 @@
 #define TEMP_SENSOR_6 0
 #define TEMP_SENSOR_7 0
 #ifdef ENV_CHARLIE
-    #define TEMP_SENSOR_BED 0 // Alex TODO: put this back when we get the heated bed back.
+    #define TEMP_SENSOR_BED 0 // Toybox Alex TODO: put this back when we get the heated bed back.
 #elif defined(ENV_ALPHA3)
     #define TEMP_SENSOR_BED 0
 #else
@@ -1340,7 +1340,7 @@
  */
 
 #ifdef ENV_CHARLIE
-  #define DEFAULT_MAX_FEEDRATE          { 300, 300, 15, 30 }
+  #define DEFAULT_MAX_FEEDRATE          { 250, 250, 15, 30 }
 #elif defined(ENV_ALPHA3)
   #define DEFAULT_MAX_FEEDRATE          { 300, 300, 10, 100 }
 #else 
@@ -1702,7 +1702,7 @@
 #ifdef ENV_ALPHA3
 #define NOZZLE_TO_PROBE_OFFSET { 10, 10, 0 }
 #elif defined(ENV_CHARLIE)
-#define NOZZLE_TO_PROBE_OFFSET { 11, 23, -2 }
+#define NOZZLE_TO_PROBE_OFFSET { 11, 23, -3.5 }
 #endif
 
 // Enable and set to use a specific tool for probing. Disable to allow any tool.
@@ -1716,18 +1716,19 @@
 #ifdef ENV_ALPHA3
   #define PROBING_MARGIN 10
 #elif defined(ENV_CHARLIE)
-  #define PROBING_MARGIN 5
+  #define PROBING_MARGIN 10
 #endif
 
 // X and Y axis travel speed between probes.
 // Leave undefined to use the average of the current XY homing feedrate.
-#define XY_PROBE_FEEDRATE    (200*60) // (mm/min)
+#define XY_PROBE_FEEDRATE    (250*60) // (mm/min)
 
 // Feedrate for the first approach when double-probing (MULTIPLE_PROBING == 2)
-#define Z_PROBE_FEEDRATE_FAST  (5*60) // (mm/min)
+#define Z_PROBE_FEEDRATE_FAST  (15*60) // (mm/min)
 
 // Feedrate for the "accurate" probe of each point
-#define Z_PROBE_FEEDRATE_SLOW (Z_PROBE_FEEDRATE_FAST / 2) // (mm/min)
+// Toybox Alex: M48 gave better repeatability with 10 mm/sec than 5 mm/sec
+#define Z_PROBE_FEEDRATE_SLOW (10*60) // (mm/min)
 
 /**
  * Probe Activation Switch
@@ -1775,8 +1776,8 @@
  * A total of 2 does fast/slow probes with a weighted average.
  * A total of 3 or more adds more slow probes, taking the average.
  */
-//#define MULTIPLE_PROBING 2
-//#define EXTRA_PROBING    1
+#define MULTIPLE_PROBING 3
+#define EXTRA_PROBING    2
 
 /**
  * Z probes require clearance when deploying, stowing, and moving between
@@ -1793,12 +1794,12 @@
  *     But: 'M851 Z+1' with a CLEARANCE of 2  =>  2mm from bed to nozzle.
  */
 #define Z_CLEARANCE_DEPLOY_PROBE   10 // (mm) Z Clearance for Deploy/Stow
-#define Z_CLEARANCE_BETWEEN_PROBES  5 // (mm) Z Clearance between probe points
-#define Z_CLEARANCE_MULTI_PROBE     5 // (mm) Z Clearance between multiple probes
+#define Z_CLEARANCE_BETWEEN_PROBES  3 // (mm) Z Clearance between probe points
+#define Z_CLEARANCE_MULTI_PROBE     3 // (mm) Z Clearance between multiple probes
 #define Z_PROBE_ERROR_TOLERANCE     3 // (mm) Tolerance for early trigger (<= -probe.offset.z + ZPET)
-//#define Z_AFTER_PROBING           5 // (mm) Z position after probing is done
+// #define Z_AFTER_PROBING           5 // (mm) Z position after probing is done
 
-#define Z_PROBE_LOW_POINT          -2 // (mm) Farthest distance below the trigger-point to go before stopping
+#define Z_PROBE_LOW_POINT          -3.5 // (mm) Farthest distance below the trigger-point to go before stopping
 
 // For M851 provide ranges for adjusting the X, Y, and Z probe offsets
 //#define PROBE_OFFSET_XMIN -50   // (mm)
@@ -1806,10 +1807,10 @@
 //#define PROBE_OFFSET_YMIN -50   // (mm)
 //#define PROBE_OFFSET_YMAX  50   // (mm)
 #define PROBE_OFFSET_ZMIN -10   // (mm)
-#define PROBE_OFFSET_ZMAX  10   // (mm)
+#define PROBE_OFFSET_ZMAX  0   // (mm)
 
 // Enable the M48 repeatability test to test probe accuracy
-//#define Z_MIN_PROBE_REPEATABILITY_TEST
+#define Z_MIN_PROBE_REPEATABILITY_TEST
 
 // Before deploy/stow pause for user confirmation
 //#define PAUSE_BEFORE_DEPLOY_STOW
@@ -1918,7 +1919,7 @@
 // @section homing
 
 //#define NO_MOTION_BEFORE_HOMING // Inhibit movement until all axes have been homed. Also enable HOME_AFTER_DEACTIVATE for extra safety.
-//#define HOME_AFTER_DEACTIVATE   // Require rehoming after steppers are deactivated. Also enable NO_MOTION_BEFORE_HOMING for extra safety.
+#define HOME_AFTER_DEACTIVATE   // Require rehoming after steppers are deactivated. Also enable NO_MOTION_BEFORE_HOMING for extra safety.
 
 /**
  * Set Z_IDLE_HEIGHT if the Z-Axis moves on its own when steppers are disabled.
@@ -2248,7 +2249,7 @@
  * Turn on with the command 'M111 S32'.
  * NOTE: Requires a lot of flash!
  */
-//#define DEBUG_LEVELING_FEATURE
+// #define DEBUG_LEVELING_FEATURE
 
 #if ANY(MESH_BED_LEVELING, AUTO_BED_LEVELING_UBL, PROBE_MANUALLY)
   // Set a height for the start of manual adjustment
@@ -2263,7 +2264,10 @@
    */
   #define ENABLE_LEVELING_FADE_HEIGHT
   #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
-    #define DEFAULT_LEVELING_FADE_HEIGHT 2.0 // (mm) Default fade height.
+     // Toybox Alex: bed will be fairly flat, but still potentially tilted, 
+     // so this shouldn't be too low. Setting it too low will cause the nozzle
+     // grind against the print.
+    #define DEFAULT_LEVELING_FADE_HEIGHT 15.0
   #endif
 
   /**
@@ -2303,7 +2307,7 @@
 
     // Beyond the probed grid, continue the implied tilt?
     // Default is to maintain the height of the nearest edge.
-    //#define EXTRAPOLATE_BEYOND_GRID
+    #define EXTRAPOLATE_BEYOND_GRID // Toybox Alex: bed will be fairly flat, but still potentially tilted, so this is what we want
 
     //
     // Subdivision of the grid by Catmull-Rom method.
