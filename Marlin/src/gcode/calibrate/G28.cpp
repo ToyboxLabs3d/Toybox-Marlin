@@ -25,6 +25,7 @@
 #include "../gcode.h"
 
 #include "../../module/endstops.h"
+#include "../../module/temperature.h"
 #include "../../module/planner.h"
 #include "../../module/stepper.h" // for various
 
@@ -239,9 +240,24 @@ void GcodeSuite::G28() {
   #endif
 
   // Home (O)nly if position is unknown
-  if (!axes_should_home() && parser.seen_test('O')) {
-    if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("> homing not needed, skip");
-    return;
+  // if (!axes_should_home() && parser.seen_test('O')) {
+  //   if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("> homing not needed, skip");
+  //   return;
+  // }
+
+  if(parser.seen_test('O')){
+    if(!parser.seen_test('X') && !parser.seen_test('Y') && !parser.seen_test('Z')){
+      if(!axes_should_home()){
+        return;
+      }
+    }else{
+      bool home_x = parser.seen_test('X') && axis_should_home(X_AXIS);
+      bool home_y = parser.seen_test('Y') && axis_should_home(Y_AXIS);
+      bool home_z = parser.seen_test('Z') && axis_should_home(Z_AXIS);
+      if(!home_x && !home_y && !home_z){
+        return;
+      }
+    }
   }
 
   #if ENABLED(FULL_REPORT_TO_HOST_FEATURE)
@@ -463,6 +479,14 @@ void GcodeSuite::G28() {
               stepper.set_all_z_lock(false);
               stepper.set_separate_multi_axis(false);
             #endif
+
+            if (parser.seenval('U'))
+            {
+              SERIAL_ECHOLN("GOT U PARAM");
+              // Toybox Alex TODO: softWaitForTemp waits for temp to stabilize at the lower temp, 
+              // which takes longer, use wait_for_hotend with the early_stop_temperature parameter instead
+              thermalManager.softWaitForTemp(parser.intval('U'), 0);
+            }
 
             #if ENABLED(Z_SAFE_HOMING)
               // H means hold the current X/Y position when probing.

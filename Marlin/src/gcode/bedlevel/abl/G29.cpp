@@ -300,6 +300,12 @@ G29_TYPE GcodeSuite::G29() {
 
     #if ENABLED(AUTO_BED_LEVELING_BILINEAR)
 
+    if (parser.seenval('U')){
+      // Toybox Alex TODO: softWaitForTemp waits for temp to stabilize at the lower temp, 
+      // which takes longer, use wait_for_hotend with the early_stop_temperature parameter instead
+      thermalManager.softWaitForTemp(parser.intval('U'), 0);
+    }
+
       const bool seen_w = parser.seen_test('W');
       if (seen_w) {
         if (!leveling_is_valid()) {

@@ -40,11 +40,12 @@ void GcodeSuite::M851() {
 
   // Assume no errors
   bool ok = true;
-  if(parser.seenval('Q'))
+  if(parser.seen('Q'))
   {
     set_bed_leveling_enabled(false);
     set_axis_never_homed(Z_AXIS);
   }
+
   if (parser.seenval('X')) {
     const float x = parser.value_float();
     #if HAS_PROBE_XY_OFFSET
@@ -75,11 +76,35 @@ void GcodeSuite::M851() {
 
   if (parser.seenval('Z')) {
     const float z = parser.value_float();
-    if (WITHIN(z, PROBE_OFFSET_ZMIN, PROBE_OFFSET_ZMAX))
+    if (WITHIN(z, PROBE_OFFSET_ZMIN, PROBE_OFFSET_ZMAX)){
       offs.z = z;
+    }
     else {
       SERIAL_ECHOLNPGM(GCODE_ERR_MSG("Z out of range (", PROBE_OFFSET_ZMIN, " to ", PROBE_OFFSET_ZMAX, ")"));
       ok = false;
+    }
+  }
+
+  bool apply_now = parser.seenval('A') ? parser.value_bool() : parser.seen('A');
+  if(ok && apply_now) {
+    bool need_sync = false;
+    if(parser.seenval('X') && axis_was_homed(X_AXIS)) {
+      // Apply X change to current position
+      current_position.x -= offs.x - probe.offset.x;
+      need_sync = true;
+    }
+    if(parser.seenval('Y') && axis_was_homed(Y_AXIS)) {
+      // Apply Y change to current position
+      current_position.y -= offs.y - probe.offset.y;
+      need_sync = true;
+    }
+    if(parser.seenval('Z') && axis_was_homed(Z_AXIS)) {
+      // Apply Z change to current position
+      current_position.z -= offs.z - probe.offset.z;
+      need_sync = true;
+    }
+    if(need_sync) {
+      sync_plan_position();
     }
   }
 
