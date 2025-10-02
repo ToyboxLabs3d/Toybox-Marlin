@@ -485,8 +485,6 @@ void GcodeSuite::G28() {
             if (parser.seenval('U'))
             {
               SERIAL_ECHOLN("GOT U PARAM");
-              // Toybox Alex TODO: softWaitForTemp waits for temp to stabilize at the lower temp, 
-              // which takes longer, use wait_for_hotend with the early_stop_temperature parameter instead
               thermalManager.softWaitForTemp(parser.intval('U'), 0);
             }
 

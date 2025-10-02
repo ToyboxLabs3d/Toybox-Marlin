@@ -492,9 +492,10 @@ void GCodeQueue::get_serial_commands() {
           long gcode_N = strtol(npos + 1, nullptr, 10);
 
           // The line number must be in the correct sequence.
-          if (gcode_N != serial.last_N + 1 /* && !M110 */ /* ToyboxAlex: wtf is the point of && !M110? 
+          if (gcode_N != serial.last_N + 1 /* && !M110 */ /* Toybox Alex: What is the point of && !M110? 
             It makes serial less robust if the printer handler is implemented correctly.
-            It means if the line before M110 is missed we will skip it without noticing. */) 
+            It means if the line before M110 is missed we will skip it without noticing. 
+            We can always reset the line number by sending M110 without a line number. */) 
           {
             // A request-for-resend line was already in transit so we got two - oops!
             if (WITHIN(gcode_N, serial.last_N - 1, serial.last_N)){ 
@@ -522,7 +523,7 @@ void GCodeQueue::get_serial_commands() {
             break;
           }
 
-          // ToyboxAlex: Do this here so we can use line number checking with M110
+          // Toybox Alex: Do this here so we can use line number checking with M110
           if (M110) {
             char* n2pos = strchr(command + 4, 'N');
             if (n2pos) {

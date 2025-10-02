@@ -4705,6 +4705,8 @@ void Temperature::isr() {
         idle();
         gcode.reset_stepper_timeout(); // Keep steppers powered
       } while (currentTemp < target_temp );
+      // Toybox Alex: Do we really want to restore the old temperature if it was lower?
+      // The point of this is to keep the nozzle at a safe temperature for z-probing.
       if(setNewTarget){
         thermalManager.setTargetHotend(old_target, target_extruder);
       }
