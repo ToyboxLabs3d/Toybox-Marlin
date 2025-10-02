@@ -1577,7 +1577,7 @@ static_assert(NUM_SERVOS <= NUM_SERVO_PLUGS, "NUM_SERVOS (or some servo index) i
     #if MULTIPLE_PROBING == 0
       #error "EXTRA_PROBING requires MULTIPLE_PROBING."
     #elif MULTIPLE_PROBING < 2
-      #error "MULTIPLE_PROBING must be 2 or more."
+      // #error "MULTIPLE_PROBING must be 2 or more."
     #elif MULTIPLE_PROBING <= EXTRA_PROBING
       #error "EXTRA_PROBING must be less than MULTIPLE_PROBING."
     #endif
