@@ -152,11 +152,13 @@ void MarlinHAL::delay_ms(const int ms) {
   delay(ms);
 }
 
-#ifdef ENV_CHARLIE
+#if HAS_FILAMENT_SENSOR
   extern uint32_t raw_HALL_ADC_value;
   uint32_t tick_t=0;
   uint8_t hall_adc_debug=0;
+  bool fake_filament_pin_state = false;
 #endif
+
 
 void MarlinHAL::idletask() {
   #if ENABLED(MARLIN_DEV_MODE)
@@ -182,13 +184,36 @@ void MarlinHAL::idletask() {
       }
     }
   #endif
-  #ifdef ENV_CHARLIE
-  if(hall_adc_debug == 1)
-  {
+  #if HAS_FILAMENT_SENSOR
+  // fake_filament_pin_state = (raw_HALL_ADC_value > 1600);
+  static int in_between_count = 0;
+  if(raw_HALL_ADC_value > 1800) {
+    fake_filament_pin_state = true; // filament out
+    in_between_count = 0;
+  } else if(raw_HALL_ADC_value < 1500) {
+    fake_filament_pin_state = false; // filament present
+    in_between_count = 0;
+  } else {
+    in_between_count++;
+    if(in_between_count == 150000) {
+      SERIAL_ECHO_MSG("Hall ADC value in between for a long time: ", raw_HALL_ADC_value);
+      in_between_count = 0;
+    }
+  }
+  if(hall_adc_debug == 1){
+    static uint16_t highest_seen = 0;
+    static uint16_t lowest_seen = 0xFFFF;
+    static uint32_t count = 0;
+    count++;
+    highest_seen = max(highest_seen, raw_HALL_ADC_value);
+    lowest_seen = min(lowest_seen, raw_HALL_ADC_value);
     if(millis()-tick_t >=1000)
     {
       tick_t = millis();
-      SERIAL_ECHO_MSG("Hall adc value:",raw_HALL_ADC_value); 
+      SERIAL_ECHO_MSG("Hall adc value:",raw_HALL_ADC_value, " highest:",highest_seen, " lowest:",lowest_seen, " count:",count, " fake state:", fake_filament_pin_state);
+      highest_seen = 0;
+      lowest_seen = 0xFFFF;
+      count = 0;
     }
   }
  #endif

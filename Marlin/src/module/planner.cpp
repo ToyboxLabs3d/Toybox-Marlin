@@ -250,6 +250,12 @@ float Planner::previous_nominal_speed;
   volatile uint32_t Planner::block_buffer_runtime_us = 0;
 #endif
 
+#if HAS_FILAMENT_SENSOR
+std::atomic<bool> Planner::need_to_clear = false; 
+
+std::atomic<int32_t> Planner::first_line_cleared = -1;
+int32_t Planner::last_line_number_processed = -1;
+#endif
 /**
  * Class and Instance Methods
  */
@@ -756,6 +762,14 @@ block_t* Planner::get_current_block() {
     // If we are here, there is no excuse to deliver the block
     block_t * const block = &block_buffer[block_buffer_tail];
 
+  #if HAS_FILAMENT_SENSOR
+    if(need_to_clear && last_line_number_processed != block->line_number){
+      first_line_cleared = block->line_number;
+      last_line_number_processed = -1;
+      clear_block_buffer();
+      return nullptr;
+    }
+  #endif
     // No trapezoid calculated? Don't execute yet.
     if (block->flag.recalculate) return nullptr;
 
@@ -765,12 +779,19 @@ block_t* Planner::get_current_block() {
     // As this block is busy, advance the nonbusy block pointer
     block_buffer_nonbusy = next_block_index(block_buffer_tail);
 
+#if HAS_FILAMENT_SENSOR
+    last_line_number_processed = block->line_number;
+#endif
     // Return the block
     return block;
   }
 
   // The queue became empty
   TERN_(HAS_WIRED_LCD, clear_block_buffer_runtime()); // paranoia. Buffer is empty now - so reset accumulated time to zero.
+
+  #if HAS_FILAMENT_SENSOR
+  need_to_clear = false;
+  #endif
 
   return nullptr;
 }
@@ -1829,6 +1850,10 @@ bool Planner::_populate_block(
     );
   //*/
 
+  #if HAS_FILAMENT_SENSOR
+  block->line_number = parser.get_line_number();
+  #endif
+  
   #if ANY(PREVENT_COLD_EXTRUSION, PREVENT_LENGTHY_EXTRUDE)
     if (dist.e) {
       #if ENABLED(PREVENT_COLD_EXTRUSION)

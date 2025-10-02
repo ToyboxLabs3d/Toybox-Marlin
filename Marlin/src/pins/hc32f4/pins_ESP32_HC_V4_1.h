@@ -104,16 +104,18 @@
 //
 // Filament Runout Sensor
 //
-#define FIL_RUNOUT_PIN PB12
+#if HAS_FILAMENT_SENSOR
+#define FIL_RUNOUT_PIN 1001 // Dummy pin
+#endif
 #ifndef FIL_RUNOUT_PIN
   #define FIL_RUNOUT_PIN                    -1   // "Pulled-high" *
 #endif
 
-#ifdef ENV_CHARLIE
+#if HAS_FILAMENT_SENSOR && defined(ENV_CHARLIE)
   #define FIL_HALL_PIN                    PA5   // HALL
-  #ifdef FIL_HALL_PIN
+#endif
+#ifdef FIL_HALL_PIN
   #define HAS_HALL_SENSOR                   1
-  #endif
 #endif
 //
 // Steppers

@@ -53,6 +53,9 @@
 
 #define FILAMENT_IS_OUT(N...) (READ(FIL_RUNOUT##N##_PIN) == FIL_RUNOUT##N##_STATE)
 
+  
+extern bool need_runout_state_print;
+
 typedef Flags<
           #if NUM_MOTION_SENSORS > NUM_RUNOUT_SENSORS
             NUM_MOTION_SENSORS
@@ -107,6 +110,7 @@ class TFilamentMonitor : public FilamentMonitorBase {
     }
 
     static void reset() {
+      SERIAL_ECHO_MSG("TFilamentMonitor::reset()");
       filament_ran_out = false;
       response.reset();
     }
@@ -114,6 +118,7 @@ class TFilamentMonitor : public FilamentMonitorBase {
     // Call this method when filament is present,
     // so the response can reset its counter.
     static void filament_present(const uint8_t extruder) {
+      // SERIAL_ECHO_MSG("TFilamentMonitor::filament_present()");
       response.filament_present(extruder);
     }
     #if ENABLED(FILAMENT_SWITCH_AND_MOTION)
@@ -138,27 +143,46 @@ class TFilamentMonitor : public FilamentMonitorBase {
 
     // Give the response a chance to update its counter.
     static void run() {
-      if (enabled && !filament_ran_out && should_monitor_runout()) {
-        TERN_(HAS_FILAMENT_RUNOUT_DISTANCE, cli()); // Prevent RunoutResponseDelayed::block_completed from accumulating here
-        response.run();
-        sensor.run();
-        const runout_flags_t runout_flags = response.has_run_out();
-        TERN_(HAS_FILAMENT_RUNOUT_DISTANCE, sei());
-        #if MULTI_FILAMENT_SENSOR
-          #if ENABLED(WATCH_ALL_RUNOUT_SENSORS)
-            const bool ran_out = bool(runout_flags);  // any sensor triggers
-            uint8_t extruder = 0;
-            if (ran_out) while (!runout_flags.test(extruder)) extruder++;
-          #else
-            const bool ran_out = runout_flags[active_extruder];  // suppress non active extruders
-            uint8_t extruder = active_extruder;
-          #endif
+
+      static bool was_runout = false;
+
+      TERN_(HAS_FILAMENT_RUNOUT_DISTANCE, cli()); // Prevent RunoutResponseDelayed::block_completed from accumulating here
+      response.run();
+      sensor.run();
+      const runout_flags_t runout_flags = response.has_run_out();
+      TERN_(HAS_FILAMENT_RUNOUT_DISTANCE, sei());
+      #if MULTI_FILAMENT_SENSOR
+        #if ENABLED(WATCH_ALL_RUNOUT_SENSORS)
+          const bool ran_out = bool(runout_flags);  // any sensor triggers
+          uint8_t extruder = 0;
+          if (ran_out) while (!runout_flags.test(extruder)) extruder++;
         #else
-          const bool ran_out = bool(runout_flags);
+          const bool ran_out = runout_flags[active_extruder];  // suppress non active extruders
           uint8_t extruder = active_extruder;
         #endif
+      #else
+        const bool ran_out = bool(runout_flags);
+        // uint8_t extruder = active_extruder;
+      #endif
 
+      if(ran_out != was_runout || need_runout_state_print) {
+        was_runout = ran_out;
+        need_runout_state_print = false;
+        if(ran_out){
+          SERIAL_ECHO_MSG("filament_not_loaded");
+        }else {
+          SERIAL_ECHO_MSG("filament_loaded");
+        }
+      }
+
+      int32_t first_line_cleared = planner.first_line_cleared.exchange(-1);
+      if(first_line_cleared != -1) {
+        SERIAL_ECHO_MSG("first_line_cleared: ", first_line_cleared);
+      }
+
+      if (enabled && !filament_ran_out && should_monitor_runout()) {
         if (ran_out) {
+          SERIAL_ECHO_MSG("handling runout.");
           #if ENABLED(FILAMENT_RUNOUT_SENSOR_DEBUG)
             SERIAL_ECHOPGM("Runout Sensors: ");
             for (uint8_t i = 0; i < 8; ++i) SERIAL_CHAR('0' + char(runout_flags[i]));
@@ -166,8 +190,24 @@ class TFilamentMonitor : public FilamentMonitorBase {
           #endif
 
           filament_ran_out = true;
-          event_filament_runout(extruder);
+          // event_filament_runout(extruder);
+          planner.need_to_clear = true;
+
+          SERIAL_ECHO_MSG("filament_runout");
+          millis_t start = millis();
+          // Give ESP32 a chance to stop sending commands.
+          while(millis() - start < 1000) {
+            idle();
+          }
+          queue.clear();
+          SERIAL_ECHO_MSG("queue cleared");
+          while (SERIAL_IMPL.available(0)) { 
+            SERIAL_IMPL.read(0);
+          }
+          SERIAL_ECHO_MSG("serial flushed");
           planner.synchronize();
+          SERIAL_ECHO_MSG("synchronized planner after runout event");
+          SERIAL_ECHO_MSG("synced_after_runout");
         }
       }
     }

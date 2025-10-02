@@ -66,6 +66,9 @@ private:
     static char *command_args;      // Args start here, for slow scan
   #endif
 
+  #if HAS_FILAMENT_SENSOR
+  static int32_t line_number;
+  #endif
 public:
 
   // Global states for G-Code-level units features
@@ -104,6 +107,10 @@ public:
   // Reset is done before parsing
   static void reset();
 
+  #if HAS_FILAMENT_SENSOR
+  static int32_t get_line_number();
+  #endif
+  
   #define LETTER_BIT(N) ((N) - 'A')
 
   FORCE_INLINE static bool valid_signless(const char * const p) {

@@ -27,6 +27,9 @@
 #include "../../gcode.h"
 #include "../../../feature/runout.h"
 
+
+bool simulate_filament_runout = false; // Used for testing
+
 /**
  * M412: Enable / Disable filament runout detection
  *
@@ -37,6 +40,10 @@
  *  D<linear> : Extra distance to continue after runout is triggered
  */
 void GcodeSuite::M412() {
+  need_runout_state_print = true;
+  if(parser.seenval('F')){
+    simulate_filament_runout = parser.value_bool();
+  }
   if (parser.seen("RS"
     TERN_(HAS_FILAMENT_RUNOUT_DISTANCE, "D")
     TERN_(HOST_ACTION_COMMANDS, "H")

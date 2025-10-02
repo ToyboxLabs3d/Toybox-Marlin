@@ -132,8 +132,8 @@ enum ADCSensorState : char {
   #if HAS_ADC_BUTTONS
     Prepare_ADC_KEY, Measure_ADC_KEY,
   #endif
-  #ifdef ENV_CHARLIE
-  Prepare_HALL_ADC, Measure_HALL_ADC,
+  #if HAS_HALL_SENSOR && defined(ENV_CHARLIE)
+    Prepare_HALL_ADC, Measure_HALL_ADC,
   #endif
   SensorsReady, // Temperatures ready. Delay the next round of readings to let ADC pins settle.
   StartupDelay  // Startup, delay initial temp reading a tiny bit so the hardware can settle
@@ -1025,7 +1025,7 @@ class Temperature {
 
       #if HAS_TEMP_HOTEND
         static bool wait_for_hotend(const uint8_t target_extruder, const bool no_wait_for_cooling=true
-          OPTARG(G26_CLICK_CAN_CANCEL, const bool click_to_cancel=false)
+          OPTARG(G26_CLICK_CAN_CANCEL, const bool click_to_cancel=false), int early_stop_temperature = -1
         );
 
         #if ENABLED(WAIT_FOR_HOTEND)
@@ -1340,6 +1340,8 @@ class Temperature {
     #if HAS_MARLINUI_MENU && HAS_TEMPERATURE && HAS_PREHEAT
       static void lcd_preheat(const uint8_t e, const int8_t indh, const int8_t indb);
     #endif
+
+    void softWaitForTemp(celsius_t temp, uint8_t target_extruder);
 
   private:
 

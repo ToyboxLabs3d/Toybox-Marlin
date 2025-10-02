@@ -100,6 +100,15 @@ void GcodeSuite::M104_M109(const bool isM109) {
     if (got_temp) temp = parser.value_celsius();
   }
 
+  int early_stop_temperature = -1;
+  if(parser.seenval('U')){
+    early_stop_temperature = parser.intval('U');
+    if (!got_temp){
+      temp = early_stop_temperature;
+      got_temp = true;
+    }
+  }
+
   if (got_temp) {
     #if ENABLED(SINGLENOZZLE_STANDBY_TEMP)
       thermalManager.singlenozzle_temp[target_extruder] = temp;
@@ -127,8 +136,9 @@ void GcodeSuite::M104_M109(const bool isM109) {
 
   TERN_(AUTOTEMP, planner.autotemp_M104_M109());
 
-  if (isM109 && got_temp)
-    (void)thermalManager.wait_for_hotend(target_extruder, no_wait_for_cooling);
+  if (isM109 && got_temp) {
+    (void)thermalManager.wait_for_hotend(target_extruder, no_wait_for_cooling, early_stop_temperature);
+  }
 }
 
 #endif // HAS_HOTEND

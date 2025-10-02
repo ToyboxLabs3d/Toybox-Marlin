@@ -300,6 +300,10 @@ G29_TYPE GcodeSuite::G29() {
 
     #if ENABLED(AUTO_BED_LEVELING_BILINEAR)
 
+    if (parser.seenval('U')){
+      thermalManager.softWaitForTemp(parser.intval('U'), 0);
+    }
+
       const bool seen_w = parser.seen_test('W');
       if (seen_w) {
         if (!leveling_is_valid()) {

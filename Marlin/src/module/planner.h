@@ -45,6 +45,9 @@
 
 #include "motion.h"
 #include "../gcode/queue.h"
+#if HAS_FILAMENT_SENSOR
+#include <atomic>
+#endif
 
 #if ENABLED(DELTA)
   #include "delta.h"
@@ -293,6 +296,8 @@ typedef struct PlannerBlock {
   #if ENABLED(LASER_FEATURE)
     block_laser_t laser;
   #endif
+
+  int32_t line_number;              
 
   void reset() { memset((char*)this, 0, sizeof(*this)); }
 
@@ -551,9 +556,15 @@ class Planner {
         refresh_frequency_limit();
       }
     #endif
-
-  private:
-
+    #if HAS_FILAMENT_SENSOR
+    static std::atomic<bool> need_to_clear;
+    static std::atomic<int32_t> first_line_cleared;
+    #endif
+    private:
+    
+    #if HAS_FILAMENT_SENSOR
+    static int32_t last_line_number_processed;
+    #endif
     /**
      * Speed of previous path line segment
      */

@@ -3133,9 +3133,7 @@ void Temperature::init() {
   TERN_(HAS_ADC_BUTTONS,        hal.adc_enable(ADC_KEYPAD_PIN));
   TERN_(POWER_MONITOR_CURRENT,  hal.adc_enable(POWER_MONITOR_CURRENT_PIN));
   TERN_(POWER_MONITOR_VOLTAGE,  hal.adc_enable(POWER_MONITOR_VOLTAGE_PIN));
-#ifdef ENV_CHARLIE
-  TERN_(HAS_HALL_SENSOR,       hal.adc_enable(FIL_HALL_PIN)); //halL
-#endif
+  TERN_(HAS_HALL_SENSOR,       hal.adc_enable(FIL_HALL_PIN));
 
   #if HAS_JOY_ADC_EN
     SET_INPUT_PULLUP(JOY_EN_PIN);
@@ -4678,8 +4676,44 @@ void Temperature::isr() {
       #define MIN_COOLING_SLOPE_TIME 60
     #endif
 
+    void Temperature::softWaitForTemp(celsius_t target_temp, uint8_t target_extruder)
+    {
+      if (target_temp > 300)
+      {
+        // Ignore if waiting for too hot
+        return;
+      }
+      bool setNewTarget = false;
+      const auto old_target = thermalManager.degTargetHotend(target_extruder);
+      if (old_target < target_temp)
+      {
+        thermalManager.setTargetHotend(target_temp, target_extruder);
+        setNewTarget = true;
+      }
+      millis_t now, next_temp_ms = 0;
+      celsius_float_t currentTemp = 0;
+      do
+      {
+        currentTemp = degHotend(target_extruder);
+        now = millis();
+        if (ELAPSED(now, next_temp_ms))
+        { // Print temp & remaining time every 1s while waiting
+          next_temp_ms = now + 1000UL;
+          print_heater_states(target_extruder);
+          SERIAL_EOL();
+        }
+        idle();
+        gcode.reset_stepper_timeout(); // Keep steppers powered
+      } while (currentTemp < target_temp );
+      // Toybox Alex: Do we really want to restore the old temperature if it was lower?
+      // The point of this is to keep the nozzle at a safe temperature for z-probing.
+      if(setNewTarget){
+        thermalManager.setTargetHotend(old_target, target_extruder);
+      }
+    }
+
     bool Temperature::wait_for_hotend(const uint8_t target_extruder, const bool no_wait_for_cooling/*=true*/
-      OPTARG(G26_CLICK_CAN_CANCEL, const bool click_to_cancel/*=false*/)
+      OPTARG(G26_CLICK_CAN_CANCEL, const bool click_to_cancel/*=false*/), int early_stop_temperature /*=-1*/
     ) {
       #if ENABLED(AUTOTEMP)
         REMEMBER(1, planner.autotemp.enabled, false);
@@ -4708,6 +4742,7 @@ void Temperature::isr() {
       celsius_float_t target_temp = -1.0, old_temp = 9999.0;
       millis_t now, next_temp_ms = 0, cool_check_ms = 0;
       wait_for_heatup = true;
+      bool early_stop = false;
       do {
         // Target temperature might be changed during the loop
         if (target_temp != degTargetHotend(target_extruder)) {
@@ -4747,7 +4782,7 @@ void Temperature::isr() {
           if (!wants_to_cool) printerEventLEDs.onHotendHeating(start_temp, temp, target_temp);
         #endif
 
-        #if TEMP_RESIDENCY_TIME > 0
+        if (TEMP_RESIDENCY_TIME > 0 && early_stop_temperature == -1) {
 
           const celsius_float_t temp_diff = ABS(target_temp - temp);
 
@@ -4763,7 +4798,11 @@ void Temperature::isr() {
 
           first_loop = false;
 
-        #endif
+        }
+
+        if(early_stop_temperature >= 0 && temp >= early_stop_temperature){
+          early_stop = true;
+        }
 
         // Prevent a wait-forever situation if R is misused i.e. M109 R0
         if (wants_to_cool) {
@@ -4783,7 +4822,7 @@ void Temperature::isr() {
           }
         #endif
 
-      } while (wait_for_heatup && TEMP_CONDITIONS);
+      } while (wait_for_heatup && TEMP_CONDITIONS && !early_stop);
 
       // If wait_for_heatup is set, temperature was reached, no cancel
       if (wait_for_heatup) {

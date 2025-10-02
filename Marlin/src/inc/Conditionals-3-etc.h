@@ -434,13 +434,13 @@
   #ifndef Z_PROBE_ERROR_TOLERANCE
     #define Z_PROBE_ERROR_TOLERANCE Z_CLEARANCE_MULTI_PROBE
   #endif
-  #if MULTIPLE_PROBING > 1
+  // #if MULTIPLE_PROBING > 1
     #if EXTRA_PROBING > 0
       #define TOTAL_PROBING (MULTIPLE_PROBING + EXTRA_PROBING)
     #else
       #define TOTAL_PROBING MULTIPLE_PROBING
     #endif
-  #endif
+  // #endif
 #else
   // Clear probe pin settings when no probe is selected
   #undef Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN

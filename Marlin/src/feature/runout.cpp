@@ -70,7 +70,10 @@ bool FilamentMonitorBase::enabled = true,
   #include "../lcd/extui/ui_api.h"
 #endif
 
+bool need_runout_state_print = true;
+
 void event_filament_runout(const uint8_t extruder) {
+  SERIAL_ECHO_MSG("event_filament_runout: extruder ", extruder);
 
   if (did_pause_print) return;  // Action already in progress. Purge triggered repeated runout.
 
@@ -96,7 +99,7 @@ void event_filament_runout(const uint8_t extruder) {
     hostui.prompt_do(PROMPT_FILAMENT_RUNOUT, F("FilamentRunout T"), tool); //action:out_of_filament
   #endif
 
-  const bool run_runout_script = !runout.host_handling;
+  // const bool run_runout_script = !runout.host_handling;
 
   #if ENABLED(HOST_ACTION_COMMANDS)
 
@@ -142,6 +145,7 @@ void event_filament_runout(const uint8_t extruder) {
           SERIAL_ECHOPGM("Runout Command: ");
           SERIAL_ECHOLNPGM(FILAMENT_RUNOUT_SCRIPT);
         #endif
+        SERIAL_ECHO_MSG("injecting runout script");
         queue.inject(F(FILAMENT_RUNOUT_SCRIPT));
       #endif
     }
