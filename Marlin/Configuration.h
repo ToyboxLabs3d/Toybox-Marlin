@@ -585,7 +585,7 @@
 #define TEMP_SENSOR_6 0
 #define TEMP_SENSOR_7 0
 #ifdef ENV_CHARLIE
-    #define TEMP_SENSOR_BED 0 // Toybox Alex TODO: put this back when we get the heated bed back.
+    #define TEMP_SENSOR_BED 1 // Toybox Alex TODO: put this back when we get the heated bed back.
 #elif defined(ENV_ALPHA3)
     #define TEMP_SENSOR_BED 0
 #else
