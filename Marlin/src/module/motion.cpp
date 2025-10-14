@@ -2666,6 +2666,7 @@ void prepare_line_to_destination() {
   static void home_z_with_multiple_probes(){
     
     if (probe.deploy()) { 
+      SERIAL_ECHOLNPGM("Probe deploy failed, aborting z homing");
       probe.stow(); 
       return; 
     }
@@ -2687,7 +2688,7 @@ void prepare_line_to_destination() {
       return; 
     }
     if(isnan(z_offset)){
-      SERIAL_ECHOLNPGM("Z offset is NaN, aborting G28");
+      SERIAL_ECHOLNPGM("Z offset is NaN, aborting z homing");
       return;
     }
     SERIAL_ECHOLNPGM("current position:");
