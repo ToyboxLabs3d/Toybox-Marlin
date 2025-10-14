@@ -1777,7 +1777,7 @@
  * A total of 3 or more adds more slow probes, taking the average.
  */
 #define MULTIPLE_PROBING 1
-#define EXTRA_PROBING    4 // Toybox Alex TODO: set back to 2 for release, leave at 4 to rule out noise for testing.
+#define EXTRA_PROBING    2 
 
 #ifdef ENV_CHARLIE
   #define MULTIPLE_PROBING_FOR_G28 // Toybox Alex: probe z more than once for G28
