@@ -1777,7 +1777,11 @@
  * A total of 3 or more adds more slow probes, taking the average.
  */
 #define MULTIPLE_PROBING 1
-#define EXTRA_PROBING    2
+#define EXTRA_PROBING    2 
+
+#ifdef ENV_CHARLIE
+  #define MULTIPLE_PROBING_FOR_G28 // Toybox Alex: probe z more than once for G28
+#endif
 
 /**
  * Z probes require clearance when deploying, stowing, and moving between
@@ -2266,7 +2270,7 @@
   #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
      // Toybox Alex: bed will be fairly flat, but still potentially tilted, 
      // so this shouldn't be too low. Setting it too low will cause the nozzle
-     // grind against the print.
+     // to grind against the print.
     #define DEFAULT_LEVELING_FADE_HEIGHT 15.0
   #endif
 

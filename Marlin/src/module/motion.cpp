@@ -2661,6 +2661,48 @@ void prepare_line_to_destination() {
     }
   #endif
 
+
+#ifdef MULTIPLE_PROBING_FOR_G28
+  static void home_z_with_multiple_probes(){
+    
+    if (probe.deploy()) { 
+      SERIAL_ECHOLNPGM("Probe deploy failed, aborting z homing");
+      probe.stow(); 
+      return; 
+    }
+    
+    float x_probe_point = Z_SAFE_HOMING_X_POINT;
+    float y_probe_point = Z_SAFE_HOMING_Y_POINT;
+
+    float z_offset = probe.probe_at_point(x_probe_point, 
+                                          y_probe_point,
+                                          PROBE_PT_NONE,
+                                          0,
+                                          true,
+                                          true,
+                                          -(Z_MAX_POS - Z_MIN_POS)
+                                        );
+    SERIAL_ECHOLNPGM("Z offset at (", x_probe_point, ",", y_probe_point, ") = ", z_offset);
+
+    if(probe.stow()) { 
+      return; 
+    }
+    if(isnan(z_offset)){
+      SERIAL_ECHOLNPGM("Z offset is NaN, aborting z homing");
+      return;
+    }
+    SERIAL_ECHOLNPGM("current position:");
+    report_current_position();
+    current_position.z -= z_offset;
+    set_axis_trusted(Z_AXIS);
+    set_axis_homed(Z_AXIS);
+    sync_plan_position(); 
+    destination.z = current_position.z;
+    SERIAL_ECHOLNPGM("adjusted current position for Z offset:");
+    report_current_position();
+  }
+#endif
+
   /**
    * Home an individual "raw axis" to its endstop.
    * This applies to XYZ on Cartesian and Core robots, and
@@ -2673,6 +2715,13 @@ void prepare_line_to_destination() {
    */
 
   void homeaxis(const AxisEnum axis) {
+
+    #ifdef MULTIPLE_PROBING_FOR_G28
+    if(axis == Z_AXIS){
+      home_z_with_multiple_probes();
+      return;
+    }
+    #endif
 
     #if ANY(MORGAN_SCARA, MP_SCARA)
       // Only Z homing (with probe) is permitted
