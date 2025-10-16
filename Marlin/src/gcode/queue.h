@@ -40,6 +40,7 @@ public:
      * M110 N<int> sets the current line number.
      */
     long last_N;
+    uint32_t line_number_modulus = UINT32_MAX; 
     int count;                      //!< Number of characters read in the current line of serial input
     char line_buffer[MAX_CMD_SIZE]; //!< The current line accumulator
     uint8_t input_state;            //!< The input state
@@ -213,6 +214,9 @@ public:
    * (Re)Set the current line number for the last received command
    */
   static void set_current_line_number(long n) { serial_state[ring_buffer.command_port().index].last_N = n; }
+
+  static void set_line_number_modulus(uint32_t m) { serial_state[ring_buffer.command_port().index].line_number_modulus = m; }
+
 
   /**
    * Get the current line number for the last received command

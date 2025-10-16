@@ -277,7 +277,7 @@ void GCodeQueue::flush_and_request_resend(const serial_index_t serial_ind) {
     PORT_REDIRECT(SERIAL_PORTMASK(serial_ind));   // Reply to the serial port that sent the command
   #endif
   SERIAL_FLUSH();
-  SERIAL_ECHOLNPGM(STR_RESEND, serial_state[serial_ind.index].last_N + 1);
+  SERIAL_ECHOLNPGM(STR_RESEND, (serial_state[serial_ind.index].last_N + 1) % serial_state[serial_ind.index].line_number_modulus);
   SERIAL_ECHOLNPGM(STR_OK);
 }
 
@@ -409,6 +409,11 @@ inline bool process_line_done(uint8_t &sis, char (&buff)[MAX_CMD_SIZE], int &ind
   return is_empty;                    // Inform the caller
 }
 
+
+static bool current_or_last_line_number(int64_t line_number, int64_t current_line_number, int64_t modulus){
+  return line_number == current_line_number || line_number == ((current_line_number -1 + modulus) % modulus);
+}
+
 /**
  * Get all commands waiting on the serial port and queue them.
  * Exit when the buffer is full or when no more characters are
@@ -481,31 +486,32 @@ void GCodeQueue::get_serial_commands() {
 
           const bool M110 = !!strstr_P(command, PSTR("M110"));
 
-          // ToyboxAlex: This is dumb, it stops us from using line number checking 
+          // Toybox Alex: This is dumb, it stops us from using line number checking 
           // with M110
           // if (M110) {
             // char* n2pos = strchr(command + 4, 'N');
           //   if (n2pos) npos = n2pos;
           // }
 
-          // ToyboxAlex: We don't need to check if we received a valid line number, as long as we are using checksums
+          // Toybox Alex: We don't need to check if we received a valid line number, as long as we are using checksums
           long gcode_N = strtol(npos + 1, nullptr, 10);
 
           // The line number must be in the correct sequence.
-          if (gcode_N != serial.last_N + 1 /* && !M110 */ /* Toybox Alex: What is the point of && !M110? 
+          if (int64_t(gcode_N) != int64_t((serial.last_N + 1) % serial.line_number_modulus) /* && !M110 */ /* Toybox Alex: What is the point of && !M110? 
             It makes serial less robust if the printer handler is implemented correctly.
             It means if the line before M110 is missed we will skip it without noticing. 
             We can always reset the line number by sending M110 without a line number. */) 
           {
             // A request-for-resend line was already in transit so we got two - oops!
-            if (WITHIN(gcode_N, serial.last_N - 1, serial.last_N)){ 
+            // if (WITHIN(gcode_N, serial.last_N - 1, serial.last_N)){ 
+            if(current_or_last_line_number(gcode_N, serial.last_N, serial.line_number_modulus)){ 
               SERIAL_ECHO_MSG("Sending duplicate okay for line number ", gcode_N);
               ok_to_send(&gcode_N);
               continue;
             }
             // A corrupted line or too high, indicating a lost line
             gcode_line_error(F(STR_ERR_LINE_NO), p);
-            SERIAL_ECHOLNPGM(" N", gcode_N, " expected N", serial.last_N + 1);
+            SERIAL_ECHOLNPGM(" N", gcode_N, " expected N", (serial.last_N + 1) % serial.line_number_modulus);
             break;
           }
 
@@ -534,7 +540,20 @@ void GCodeQueue::get_serial_commands() {
                 // Successfully parsed N2
                 serial.last_N = n2;
               }
+            }            
+            char* m2pos = strchr(command + 4, 'M');
+            if (m2pos) {
+              // npos = m2pos;
+              char* endptr;
+              unsigned long modulus = strtoul(m2pos + 1, &endptr, 10);
+              if(endptr != m2pos + 1) {
+                // Successfully parsed M parameter
+                serial.line_number_modulus = modulus;
+              }else{
+                serial.line_number_modulus = UINT32_MAX;
+              }
             }
+
           }else{
             serial.last_N = gcode_N;
           }
