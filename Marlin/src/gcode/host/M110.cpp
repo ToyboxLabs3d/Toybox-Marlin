@@ -35,8 +35,21 @@
  */
 void GcodeSuite::M110() {
 
-  if (parser.seenval('N'))
+  bool seen_param = false;
+  if (parser.seenval('N')){
     queue.set_current_line_number(parser.value_long());
-  else
+    seen_param = true;
+  }
+  if (parser.seenval('M')){
+    const unsigned long modulus = parser.value_ulong();
+    if (modulus > 0){
+      queue.set_line_number_modulus(modulus);
+    } else { 
+      queue.set_line_number_modulus(UINT32_MAX);
+    }
+    seen_param = true;
+  }
+  if (!seen_param) {
     SERIAL_ECHOLNPGM(STR_LINE_NO, queue.get_current_line_number());
+  }
 }

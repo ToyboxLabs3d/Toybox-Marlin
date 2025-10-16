@@ -127,7 +127,6 @@
 
 #endif // QUICK_HOME
 
-// Alex TODO: multiple probing for homing z
 
 #if ENABLED(Z_SAFE_HOMING)
 
