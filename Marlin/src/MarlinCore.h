@@ -27,6 +27,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+  #if ENABLED(TOYBOX_FAST_CMDS)
+extern bool stop_running_move;
+#endif
+
 void stop();
 
 // Pass true to keep steppers from timing out

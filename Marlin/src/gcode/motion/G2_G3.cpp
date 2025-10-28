@@ -370,7 +370,11 @@ void plan_arc(
       // calculate safe speed for stopping by the end of the arc
       const float arc_mm_remaining = flat_mm - segment_mm * i;
       hints.safe_exit_speed_sqr = _MIN(limiting_speed_sqr, 2 * limiting_accel * arc_mm_remaining);
-
+      #if ENABLED(TOYBOX_FAST_CMDS)
+        if(stop_running_move){
+          break;
+        }
+      #endif
       if (!planner.buffer_line(raw, scaled_fr_mm_s, active_extruder, hints))
         break;
 
@@ -389,6 +393,11 @@ void plan_arc(
 
   hints.curve_radius = 0;
   hints.safe_exit_speed_sqr = 0.0f;
+  #if ENABLED(TOYBOX_FAST_CMDS)
+    if(stop_running_move){
+      return;
+    }
+  #endif
   planner.buffer_line(raw, scaled_fr_mm_s, active_extruder, hints);
 
   current_position = cart;

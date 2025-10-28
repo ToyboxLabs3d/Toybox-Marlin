@@ -4678,6 +4678,11 @@ void Temperature::isr() {
 
     void Temperature::softWaitForTemp(celsius_t target_temp, uint8_t target_extruder)
     {
+      #if ENABLED(TOYBOX_FAST_CMDS)
+        if(stop_running_move){
+          return;
+        }
+      #endif
       if (target_temp > 300)
       {
         // Ignore if waiting for too hot
@@ -4702,12 +4707,21 @@ void Temperature::isr() {
           print_heater_states(target_extruder);
           SERIAL_EOL();
         }
+        #if ENABLED(TOYBOX_FAST_CMDS)
+          if(stop_running_move){
+            return;
+          }
+        #endif
         idle();
         gcode.reset_stepper_timeout(); // Keep steppers powered
       } while (currentTemp < target_temp );
       // Toybox Alex: Do we really want to restore the old temperature if it was lower?
       // The point of this is to keep the nozzle at a safe temperature for z-probing.
-      if(setNewTarget){
+      if(setNewTarget  
+        #if ENABLED(TOYBOX_FAST_CMDS)
+          && !stop_running_move
+        #endif
+      ){
         thermalManager.setTargetHotend(old_target, target_extruder);
       }
     }

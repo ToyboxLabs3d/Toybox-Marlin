@@ -84,13 +84,6 @@
     const float minfr = _MIN(homing_feedrate(X_AXIS), homing_feedrate(Y_AXIS)),
                 fr_mm_s = HYPOT(minfr, minfr);
 
-    // Set homing current to X and Y axis if defined
-    #if HAS_CURRENT_HOME(X)
-      set_homing_current(X_AXIS);
-    #endif
-    #if HAS_CURRENT_HOME(Y) && NONE(CORE_IS_XY, MARKFORGED_XY, MARKFORGED_YX)
-      set_homing_current(Y_AXIS);
-    #endif
 
     #if ENABLED(SENSORLESS_HOMING)
       sensorless_t stealth_states {
@@ -109,13 +102,6 @@
     endstops.validate_homing_move();
 
     current_position.set(0.0, 0.0);
-
-    #if HAS_CURRENT_HOME(X)
-      restore_homing_current(X_AXIS);
-    #endif
-    #if HAS_CURRENT_HOME(Y) && NONE(CORE_IS_XY, MARKFORGED_XY, MARKFORGED_YX)
-      restore_homing_current(Y_AXIS);
-    #endif
 
     #if ENABLED(SENSORLESS_HOMING) && DISABLED(ENDSTOPS_ALWAYS_ON_DEFAULT)
       TERN_(X_SENSORLESS, tmc_disable_stallguard(stepperX, stealth_states.x));
@@ -157,6 +143,14 @@
       TERN_(SENSORLESS_HOMING, safe_delay(500)); // Short delay needed to settle
 
       do_blocking_move_to_xy(destination);
+
+      #if ENABLED(TOYBOX_FAST_CMDS)
+      if(stop_running_move){
+        SERIAL_ECHOLNPGM("stop running move detected, aborting Z safe homing");
+        return;
+      }
+      #endif
+
       homeaxis(Z_AXIS);
     }
     else {
@@ -223,6 +217,13 @@ void GcodeSuite::G28() {
   DEBUG_SECTION(log_G28, "G28", DEBUGGING(LEVELING));
   if (DEBUGGING(LEVELING)) log_machine_info();
 
+  #if ENABLED(TOYBOX_FAST_CMDS)
+  if(stop_running_move){
+    SERIAL_ECHOLNPGM("stop running move detected, aborting G28");
+    return;
+  }
+  #endif
+
   #if ENABLED(MARLIN_DEV_MODE)
     if (parser.seen_test('S')) {
       LOOP_NUM_AXES(a) set_axis_is_at_home((AxisEnum)a);
@@ -233,11 +234,21 @@ void GcodeSuite::G28() {
     }
   #endif
 
+  // ------------------------------------------------------------------
+  //    CHANGE GLOBAL SETTINGS, SAVE OLD SETTINGS
+  //    + wait for planner to finish, reset stepper timeout
+  // ------------------------------------------------------------------
+
   /**
    * Set the laser power to false to stop the planner from processing the current power setting.
    */
   #if ENABLED(LASER_FEATURE)
     planner.laser_inline.status.isPowered = false;
+  #endif
+
+  #if ENABLED(DUAL_X_CARRIAGE)
+    bool IDEX_saved_duplication_state = extruder_duplication_enabled;
+    DualXMode IDEX_saved_mode = dual_x_carriage_mode;
   #endif
 
   // Home (O)nly if position is unknown
@@ -274,13 +285,17 @@ void GcodeSuite::G28() {
   // Count this command as movement / activity
   reset_stepper_timeout();
 
+  #if ENABLED(TOYBOX_FAST_CMDS)
+  if(stop_running_move){
+    SERIAL_ECHOLNPGM("stop running move detected, aborting G28 after sync");
+    set_axis_unhomed(Z_AXIS);
+    set_axis_unhomed(X_AXIS);
+    set_axis_unhomed(Y_AXIS);
+    return;
+  }
+  #endif
+
   #if NUM_AXES
-
-    #if ENABLED(DUAL_X_CARRIAGE)
-      bool IDEX_saved_duplication_state = extruder_duplication_enabled;
-      DualXMode IDEX_saved_mode = dual_x_carriage_mode;
-    #endif
-
     SET_SOFT_ENDSTOP_LOOSE(false);  // Reset a leftover 'loose' motion state
 
     // Disable the leveling matrix before homing
@@ -318,6 +333,9 @@ void GcodeSuite::G28() {
     remember_feedrate_scaling_off();
 
     endstops.enable(true); // Enable endstops for next homing move
+
+    //// ------- determine which axes need to home
+
 
     #if HAS_Z_AXIS
       bool finalRaiseZ = false;
@@ -376,7 +394,6 @@ void GcodeSuite::G28() {
 
         // Z may home first, e.g., when homing away from the bed.
         // This is also permitted when homing with a Z endstop.
-        if (TERN0(HOME_Z_FIRST, doZ)) homeaxis(Z_AXIS);
 
         // 'R' to specify a specific raise. 'R0' indicates no raise, e.g., for recovery.resume
         // When 'R0' is used, there should already be adequate clearance, e.g., from homing Z to max.
@@ -400,20 +417,46 @@ void GcodeSuite::G28() {
             with_probe = false;
           }
 
-          if (may_skate) {
-            // Apply Z clearance before doing any lateral motion
-            if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("Raise Z before homing:");
-            do_z_clearance(z_homing_height, with_probe);
-          }
-        }
 
         // Init BLTouch ahead of any lateral motion, even if not homing with the probe
         TERN_(BLTOUCH, if (may_skate) bltouch.init());
 
       #endif // HAS_Z_AXIS
 
+      // -------------------------------------------------------------
+      //  ACTUAL HOMING
+      // -------------------------------------------------------------
+      if (TERN0(HOME_Z_FIRST, doZ)) homeaxis(Z_AXIS); 
+      
+      #if ENABLED(TOYBOX_FAST_CMDS)
+        if(stop_running_move){
+          SERIAL_ECHOLNPGM("aborting G28");
+          goto cleanup;
+        }
+      #endif
+      if (may_skate) {
+        // Apply Z clearance before doing any lateral motion
+        if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("Raise Z before homing:");
+          do_z_clearance(z_homing_height, with_probe);
+        }
+      }
+
+      #if ENABLED(TOYBOX_FAST_CMDS)
+        if(stop_running_move){
+          SERIAL_ECHOLNPGM("aborting G28");
+          goto cleanup;
+        }
+      #endif
+
       // Diagonal move first if both are homing
       TERN_(QUICK_HOME, if (doX && doY) quick_home_xy());
+
+      #if ENABLED(TOYBOX_FAST_CMDS)
+        if(stop_running_move){
+          SERIAL_ECHOLNPGM("aborting G28");
+          goto cleanup;
+        }
+      #endif
 
       #if HAS_Y_AXIS
         // Home Y (before X)
@@ -449,6 +492,13 @@ void GcodeSuite::G28() {
         }
       #endif // HAS_X_AXIS
 
+      #if ENABLED(TOYBOX_FAST_CMDS)
+        if(stop_running_move){
+          SERIAL_ECHOLNPGM("aborting G28");
+          goto cleanup;
+        }
+      #endif
+
       #if ALL(FOAMCUTTER_XYUV, HAS_I_AXIS)
         // Home I (after X)
         if (doI) homeaxis(I_AXIS);
@@ -465,6 +515,16 @@ void GcodeSuite::G28() {
       #endif
 
       TERN_(IMPROVE_HOMING_RELIABILITY, end_slow_homing(saved_motion_state));
+      #if ENABLED(TOYBOX_FAST_CMDS)
+        #if ENABLED(IMPROVE_HOMING_RELIABILITY)
+          #error "IMPROVE_HOMING_RELIABILITY won't work with G28 stop_running_move aborts"
+        #endif
+
+        if(stop_running_move){
+          SERIAL_ECHOLNPGM("aborting G28");
+          goto cleanup;
+        }
+      #endif
 
       #if ENABLED(FOAMCUTTER_XYUV)
 
@@ -480,12 +540,19 @@ void GcodeSuite::G28() {
               stepper.set_all_z_lock(false);
               stepper.set_separate_multi_axis(false);
             #endif
-
+            // Allow us to block Z home until we are heated
             if (parser.seenval('U'))
             {
               SERIAL_ECHOLN("GOT U PARAM");
               thermalManager.softWaitForTemp(parser.intval('U'), 0);
             }
+
+            #if ENABLED(TOYBOX_FAST_CMDS)
+            if(stop_running_move) {
+              SERIAL_ECHOLNPGM("stop running move detected, aborting homing");
+              goto cleanup;
+            }
+            #endif
 
             #if ENABLED(Z_SAFE_HOMING)
               // H means hold the current X/Y position when probing.
@@ -504,6 +571,13 @@ void GcodeSuite::G28() {
           }
         #endif
 
+        #if ENABLED(TOYBOX_FAST_CMDS)
+        if(stop_running_move) {
+          SERIAL_ECHOLNPGM("stop running move detected, aborting homing");
+          goto cleanup;
+        }
+        #endif
+
         SECONDARY_AXIS_CODE(
           if (doI) homeaxis(I_AXIS),
           if (doJ) homeaxis(J_AXIS),
@@ -514,9 +588,6 @@ void GcodeSuite::G28() {
         );
 
       #endif // HAS_Z_AXIS
-
-      sync_plan_position();
-
     #endif
 
     /**
@@ -553,6 +624,28 @@ void GcodeSuite::G28() {
 
     #endif // DUAL_X_CARRIAGE
 
+    #ifdef XY_AFTER_HOMING
+      if (!axes_should_home(_BV(X_AXIS) | _BV(Y_AXIS)))
+        do_blocking_move_to(xy_pos_t(XY_AFTER_HOMING));
+    #endif
+
+  // -----------------------------------------------------------
+  //  CLEAN UP - restore settings
+  // -----------------------------------------------------------
+#if ENABLED(TOYBOX_FAST_CMDS)
+cleanup:
+#endif
+#if ENABLED(IMPROVE_HOMING_RELIABILITY)
+  end_slow_homing(saved_motion_state);
+#endif
+
+    #if !ENABLED(DELTA) && !ENABLED(AXEL_TPARA)
+
+    sync_plan_position();
+
+    #endif
+
+
     endstops.not_homing();
 
     // Clear endstop state for polled stallGuard endstops
@@ -570,18 +663,15 @@ void GcodeSuite::G28() {
 
     TERN_(CAN_SET_LEVELING_AFTER_G28, if (leveling_restore_state) set_bed_leveling_enabled());
 
+    restore_feedrate_and_scaling();
+
     // Restore the active tool after homing
     #if HAS_MULTI_HOTEND && (DISABLED(DELTA) || ENABLED(DELTA_HOME_TO_SAFE_ZONE))
       tool_change(old_tool_index, TERN(PARKING_EXTRUDER, !pe_final_change_must_unpark, DISABLED(DUAL_X_CARRIAGE)));   // Do move if one of these
     #endif
 
-    #ifdef XY_AFTER_HOMING
-      if (!axes_should_home(_BV(X_AXIS) | _BV(Y_AXIS)))
-        do_blocking_move_to(xy_pos_t(XY_AFTER_HOMING));
-    #endif
 
-    restore_feedrate_and_scaling();
-
+    
     if (ENABLED(NANODLP_Z_SYNC) && (ENABLED(NANODLP_ALL_AXIS) || TERN0(HAS_Z_AXIS, doZ)))
       SERIAL_ECHOLNPGM(STR_Z_MOVE_COMP);
 
@@ -597,8 +687,17 @@ void GcodeSuite::G28() {
 
   TERN_(FULL_REPORT_TO_HOST_FEATURE, set_and_report_grblstate(old_grblstate));
 
+  #if ENABLED(TOYBOX_FAST_CMDS)
+    if(stop_running_move){
+      set_axis_unhomed(Z_AXIS);
+      set_axis_unhomed(X_AXIS);
+      set_axis_unhomed(Y_AXIS);
+      return;
+    }
+  #endif
+
   #ifdef EVENT_GCODE_AFTER_HOMING
     gcode.process_subcommands_now(F(EVENT_GCODE_AFTER_HOMING));
   #endif
-
+  
 }

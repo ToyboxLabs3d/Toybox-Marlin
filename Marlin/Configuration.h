@@ -81,6 +81,9 @@
 
  #endif
 
+
+#define TOYBOX_FAST_CMDS
+
 // @section serial
 
 /**
@@ -585,7 +588,7 @@
 #define TEMP_SENSOR_6 0
 #define TEMP_SENSOR_7 0
 #ifdef ENV_CHARLIE
-    #define TEMP_SENSOR_BED 1 // Toybox Alex TODO: put this back when we get the heated bed back.
+    #define TEMP_SENSOR_BED 1 // Toybox Alex: should be 1 for heated bed, 0 otherwise
 #elif defined(ENV_ALPHA3)
     #define TEMP_SENSOR_BED 0
 #else

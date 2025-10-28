@@ -1746,7 +1746,13 @@ bool Planner::_buffer_steps(const xyze_long_t &target
   // If we are cleaning, do not accept queuing of movements
   // This must be after get_next_free_block() because it calls idle()
   // where cleaning_buffer_counter can be changed
-  if (cleaning_buffer_counter) return false;
+  if (cleaning_buffer_counter 
+    #if ENABLED(TOYBOX_FAST_CMDS)
+      || stop_running_move
+    #endif
+  ) {
+    return false;
+  }
 
   // Fill the block with the specified movement
   float minimum_planner_speed_sqr;
@@ -2863,7 +2869,13 @@ bool Planner::buffer_segment(const abce_pos_t &abce
 ) {
 
   // If we are cleaning, do not accept queuing of movements
-  if (cleaning_buffer_counter) return false;
+  if (cleaning_buffer_counter 
+    #if ENABLED(TOYBOX_FAST_CMDS)
+      || stop_running_move
+    #endif
+  ) {
+    return false;
+  }
 
   // When changing extruders recalculate steps corresponding to the E position
   #if ENABLED(DISTINCT_E_FACTORS)
@@ -2986,6 +2998,11 @@ bool Planner::buffer_line(const xyze_pos_t &cart, const_feedRate_t fr_mm_s
   , const uint8_t extruder/*=active_extruder*/
   , const PlannerHints &hints/*=PlannerHints()*/
 ) {
+  #if ENABLED(TOYBOX_FAST_CMDS)
+    if(stop_running_move) {
+      return false;
+    }
+  #endif
   xyze_pos_t machine = cart;
   TERN_(HAS_POSITION_MODIFIERS, apply_modifiers(machine));
 

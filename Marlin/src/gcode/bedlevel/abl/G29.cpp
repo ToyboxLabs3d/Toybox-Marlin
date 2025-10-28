@@ -683,6 +683,12 @@ G29_TYPE GcodeSuite::G29() {
       // Outer loop is Y with PROBE_Y_FIRST disabled
       for (PR_OUTER_VAR = 0; PR_OUTER_VAR < PR_OUTER_SIZE && !isnan(abl.measured_z); PR_OUTER_VAR++) {
 
+        #if ENABLED(TOYBOX_FAST_CMDS)
+        if(stop_running_move){
+          break;
+        }
+        #endif
+
         int8_t inStart, inStop, inInc;
 
         if (zig) {                      // Zig away from origin
@@ -704,7 +710,12 @@ G29_TYPE GcodeSuite::G29() {
         // Inner loop is Y with PROBE_Y_FIRST enabled
         // Inner loop is X with PROBE_Y_FIRST disabled
         for (PR_INNER_VAR = inStart; PR_INNER_VAR != inStop; pt_index++, PR_INNER_VAR += inInc) {
-
+          #if ENABLED(TOYBOX_FAST_CMDS)
+            if(stop_running_move){
+              set_bed_leveling_enabled(abl.reenable);
+              break;
+            }
+          #endif
           abl.probePos = abl.probe_position_lf + abl.gridSpacing * abl.meshCount.asFloat();
 
           TERN_(AUTO_BED_LEVELING_LINEAR, abl.indexIntoAB[abl.meshCount.x][abl.meshCount.y] = ++abl.abl_probe_index); // 0...
@@ -869,7 +880,11 @@ G29_TYPE GcodeSuite::G29() {
   #endif
 
   // Calculate leveling, print reports, correct the position
-  if (!isnan(abl.measured_z)) {
+  if (!isnan(abl.measured_z) 
+    #if ENABLED(TOYBOX_FAST_CMDS)
+      && !stop_running_move
+    #endif
+) {
     #if ENABLED(AUTO_BED_LEVELING_BILINEAR)
 
       if (abl.dryrun)

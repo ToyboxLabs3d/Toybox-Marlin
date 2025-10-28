@@ -773,7 +773,7 @@
  * M355 Case Light on-off / brightness
  */
 #ifdef ENV_CHARLIE
-#define CASE_LIGHT_ENABLE
+// #define CASE_LIGHT_ENABLE
 #endif
 #if ENABLED(CASE_LIGHT_ENABLE)
   #define CASE_LIGHT_PIN PD2                  // Override the default pin if needed

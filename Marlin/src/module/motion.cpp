@@ -2160,6 +2160,11 @@ void prepare_line_to_destination() {
         planner.set_e_position_mm(destination.e); // Prevent the planner from complaining too
       }
     }
+    #if ENABLED(TOYBOX_FAST_CMDS)
+      if(stop_running_move){
+        return;
+      }
+    #endif
 
   #endif // PREVENT_COLD_EXTRUSION || PREVENT_LENGTHY_EXTRUDE
 
@@ -2447,6 +2452,11 @@ void prepare_line_to_destination() {
                   ? TOOL_X_HOME_DIR(active_extruder) : home_dir(axis);
     const bool is_home_dir = (axis_home_dir > 0) == (distance > 0);
 
+    #if ENABLED(TOYBOX_FAST_CMDS)
+      if(stop_running_move){
+        return;
+      }
+    #endif
     #if ENABLED(SENSORLESS_HOMING)
       sensorless_t stealth_states;
     #endif
@@ -2492,12 +2502,20 @@ void prepare_line_to_destination() {
       #if HAS_DIST_MM_ARG
         const xyze_float_t cart_dist_mm{0};
       #endif
-
+      #if ENABLED(TOYBOX_FAST_CMDS)
+        if(stop_running_move){
+          return;
+        }
+      #endif
       // Set delta/cartesian axes directly
       target[axis] = distance;                  // The move will be towards the endstop
       planner.buffer_segment(target OPTARG(HAS_DIST_MM_ARG, cart_dist_mm), home_fr_mm_s, active_extruder);
     #endif
-
+    #if ENABLED(TOYBOX_FAST_CMDS)
+      if(stop_running_move){
+        return;
+      }
+    #endif
     planner.synchronize();
 
     if (is_home_dir) {
@@ -3031,8 +3049,13 @@ void prepare_line_to_destination() {
 
     #else // CARTESIAN / CORE / MARKFORGED_XY / MARKFORGED_YX
 
-      set_axis_is_at_home(axis);
-      sync_plan_position();
+      #if ENABLED(TOYBOX_FAST_CMDS)
+      if(!stop_running_move)
+      #endif
+      {
+        set_axis_is_at_home(axis);
+        sync_plan_position();
+      }
 
       destination[axis] = current_position[axis];
 

@@ -133,7 +133,7 @@ FORCE_INLINE typename MarlinSerial<Cfg>::ring_buffer_pos_t MarlinSerial<Cfg>::at
 template<typename Cfg>
 FORCE_INLINE void MarlinSerial<Cfg>::store_rxd_char() {
 
-  static EmergencyParser::State emergency_state; // = EP_RESET
+  static EmergencyParser::State emergency_state; 
 
   // This must read the R_UCSRA register before reading the received byte to detect error causes
   if (Cfg::DROPPED_RX && B_DOR && !++rx_dropped_bytes) --rx_dropped_bytes;

@@ -273,6 +273,10 @@ PGMSTR(M112_KILL_STR, "M112 Shutdown");
 
 MarlinState marlin_state = MarlinState::MF_INITIALIZING;
 
+#if ENABLED(TOYBOX_FAST_CMDS)
+bool stop_running_move = false;
+static bool was_stopping_running_move = false;
+#endif
 // For M109 and M190, this flag may be cleared (by M108) to exit the wait loop
 bool wait_for_heatup = false;
 
@@ -784,6 +788,11 @@ void idle(const bool no_stepper_sleep/*=false*/) {
 
   // Return if setup() isn't completed
   if (marlin_state == MarlinState::MF_INITIALIZING) goto IDLE_DONE;
+
+  #if ENABLED(TOYBOX_FAST_CMDS)
+    emergency_parser.handle_emergency_events(SERIAL_IMPL.emergency_state);
+  #endif
+
 
   // TODO: Still causing errors
   TERN_(TOOL_SENSOR, (void)check_tool_sensor_stats(active_extruder, true));
@@ -1744,6 +1753,14 @@ void loop() {
     #endif
 
     endstops.event_handler();
+
+    #if ENABLED(TOYBOX_FAST_CMDS)
+    // leave stop_running_move set for at least one full loop after being set
+    if(was_stopping_running_move){
+      stop_running_move = false;
+    }
+    was_stopping_running_move = stop_running_move;
+    #endif
 
     TERN_(HAS_TFT_LVGL_UI, printer_state_polling());
 
