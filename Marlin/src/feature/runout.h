@@ -32,6 +32,7 @@
 #include "../gcode/queue.h"
 #include "pause.h" // for did_pause_print
 #include "../MarlinCore.h" // for printingIsActive()
+#include "toybox/fast_commands.h"
 
 #include "../inc/MarlinConfig.h"
 
@@ -190,24 +191,7 @@ class TFilamentMonitor : public FilamentMonitorBase {
           #endif
 
           filament_ran_out = true;
-          // event_filament_runout(extruder);
-          planner.need_to_clear = true;
-
-          SERIAL_ECHO_MSG("filament_runout");
-          millis_t start = millis();
-          // Give ESP32 a chance to stop sending commands.
-          while(millis() - start < 1000) {
-            idle();
-          }
-          queue.clear();
-          SERIAL_ECHO_MSG("queue cleared");
-          while (SERIAL_IMPL.available(0)) { 
-            SERIAL_IMPL.read(0);
-          }
-          SERIAL_ECHO_MSG("serial flushed");
-          planner.synchronize();
-          SERIAL_ECHO_MSG("synchronized planner after runout event");
-          SERIAL_ECHO_MSG("synced_after_runout");
+          on_filament_runout();
         }
       }
     }

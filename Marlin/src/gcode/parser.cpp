@@ -33,8 +33,8 @@
 
 bool GCodeParser::volumetric_enabled;
 
-#if HAS_FILAMENT_SENSOR
-int32_t GCodeParser::line_number = -1;
+#if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
+int32_t GCodeParser::line_number = NO_LINE_NUMBER;
 #endif
 
 #if ENABLED(INCH_MODE_SUPPORT)
@@ -88,8 +88,8 @@ void GCodeParser::reset() {
     codebits = 0;                       // No codes yet
     //ZERO(param);                      // No parameters (should be safe to comment out this line)
   #endif
-  #if HAS_FILAMENT_SENSOR
-  line_number = -1;                  // No line number
+  #if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
+  line_number = NO_LINE_NUMBER;              
   #endif
 }
 
@@ -113,7 +113,7 @@ void GCodeParser::reset() {
 
 #endif
 
-#if HAS_FILAMENT_SENSOR
+#if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
 int32_t GCodeParser::get_line_number(){
   return line_number;
 }
@@ -137,7 +137,7 @@ void GCodeParser::parse(char *p) {
   // Skip N[-0-9] if included in the command line
   if (uppercase(*p) == 'N' && NUMERIC_SIGNED(p[1])) {
     //TERN_(FASTER_GCODE_PARSER, set('N', p + 1)); // (optional) Set the 'N' parameter value
-    #if HAS_FILAMENT_SENSOR
+    #if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
     line_number = atoi(p + 1); // Save the line number
     #endif
     p += 2;                  // skip N[-0-9]

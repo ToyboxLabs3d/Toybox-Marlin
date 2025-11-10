@@ -1161,6 +1161,8 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
       #if HAS_FILAMENT_SENSOR
       case 10003: M10003(); break;                              // M10003
       #endif
+      case 10004: break;                                        // M10004 do nothing, handled by emergency parser         
+      case 10005: break;                                        // M10005 do nothing, handled by emergency parser
       default: parser.unknown_command_warning(); break;
     }
     break;

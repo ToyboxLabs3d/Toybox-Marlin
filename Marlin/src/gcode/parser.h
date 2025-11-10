@@ -42,6 +42,10 @@
   typedef enum : uint8_t { LINEARUNIT_MM, LINEARUNIT_INCH } LinearUnit;
 #endif
 
+#if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
+#define NO_LINE_NUMBER (-1000)  
+#endif
+
 /**
  * G-Code parser
  *
@@ -66,7 +70,7 @@ private:
     static char *command_args;      // Args start here, for slow scan
   #endif
 
-  #if HAS_FILAMENT_SENSOR
+  #if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
   static int32_t line_number;
   #endif
 public:
@@ -107,7 +111,7 @@ public:
   // Reset is done before parsing
   static void reset();
 
-  #if HAS_FILAMENT_SENSOR
+  #if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
   static int32_t get_line_number();
   #endif
   
