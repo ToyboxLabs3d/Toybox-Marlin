@@ -1222,7 +1222,7 @@ void GcodeSuite::process_next_command() {
     #endif
   }
 
-  SERIAL_ECHO_MSG("Parsing command: ", command.buffer);
+  // SERIAL_ECHO_MSG("Parsing command: ", command.buffer);
   // Parse the next command in the queue
   parser.parse(command.buffer);
   process_parsed_command();
