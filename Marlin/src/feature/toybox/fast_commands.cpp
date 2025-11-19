@@ -1,4 +1,3 @@
-#if ENABLED(TOYBOX_FAST_CMDS)
 
 #include "fast_commands.h"
 #include "../../gcode/queue.h"
@@ -7,6 +6,7 @@
 #include "../../module/planner.h"
 
 
+#if ENABLED(TOYBOX_FAST_CMDS)
 
 static void clear_queue_and_serial(){
     do{
