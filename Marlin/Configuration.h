@@ -1719,7 +1719,7 @@
 #ifdef ENV_ALPHA3
   #define PROBING_MARGIN 10
 #elif defined(ENV_CHARLIE)
-  #define PROBING_MARGIN 10
+  #define PROBING_MARGIN 20
 #endif
 
 // X and Y axis travel speed between probes.
@@ -2214,13 +2214,13 @@
  *   leveling in steps so you can manually adjust the Z height at each grid-point.
  *   With an LCD controller the process is guided step-by-step.
  */
-//#define AUTO_BED_LEVELING_3POINT
-//#define AUTO_BED_LEVELING_LINEAR
+  //#define AUTO_BED_LEVELING_3POINT
+  //#define AUTO_BED_LEVELING_LINEAR
 #ifdef ENV_CHARLIE
   #define AUTO_BED_LEVELING_BILINEAR
 #endif
 //#define AUTO_BED_LEVELING_UBL
-//#define MESH_BED_LEVELING
+  //#define MESH_BED_LEVELING
 
 /**
  * Commands to execute at the start of G29 probing,
@@ -2271,8 +2271,7 @@
    */
   #define ENABLE_LEVELING_FADE_HEIGHT
   #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
-     // Toybox Alex: bed will be fairly flat, but still potentially tilted, 
-     // so this shouldn't be too low. Setting it too low will cause the nozzle
+     // Toybox Alex: This shouldn't be too low. Setting it too low will cause the nozzle
      // to grind against the print.
     #define DEFAULT_LEVELING_FADE_HEIGHT 15.0
   #endif
