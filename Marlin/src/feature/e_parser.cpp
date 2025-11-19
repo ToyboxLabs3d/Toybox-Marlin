@@ -278,6 +278,12 @@ void EmergencyParser::handle_emergency_events(State &state) {
   if(!enabled) {
     return;
   }
+
+  if(state.handling_emergency_events){
+    return;
+  }
+  state.handling_emergency_events = true;
+
   if(state.fast_cancel_line_number != EP_NO_CMD){
     if(state.fast_cancel_line_number == EP_CMD_WITHOUT_LINE_NUMBER){
       SERIAL_ECHOLN("ok");
@@ -285,9 +291,20 @@ void EmergencyParser::handle_emergency_events(State &state) {
       long line_number = state.fast_cancel_line_number;
       queue.ok_to_send(&line_number);
     }
-    fast_cancel();
     state.fast_cancel_line_number = EP_NO_CMD;
+    fast_cancel();
+  } else if(state.fast_pause_line_number != EP_NO_CMD){
+    if(state.fast_pause_line_number == EP_CMD_WITHOUT_LINE_NUMBER){
+      SERIAL_ECHOLN("ok");
+    }else{
+      long line_number = state.fast_pause_line_number;
+      queue.ok_to_send(&line_number);
+    }
+    state.fast_pause_line_number = EP_NO_CMD;
+    fast_pause();
   }
+
+  state.handling_emergency_events = false;
 }
 #endif
 

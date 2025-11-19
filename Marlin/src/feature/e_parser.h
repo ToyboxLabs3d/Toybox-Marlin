@@ -77,6 +77,7 @@ public:
       size_t line_number_buffer_pos = 0;
       std::atomic<long> fast_cancel_line_number = EP_NO_CMD;
       std::atomic<long> fast_pause_line_number = EP_NO_CMD;
+      bool handling_emergency_events = false;
     #endif
     StateMachineState state_machine_state = EP_RESET;
   };
