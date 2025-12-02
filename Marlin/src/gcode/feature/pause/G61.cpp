@@ -72,8 +72,11 @@ void GcodeSuite::G61(int8_t slot/*=-1*/) {
 
   const bool restore_feedrate = parser.boolval('Q');
   const bool restore_axis_relative = parser.boolval('R');
-  const bool restore_temperature = parser.boolval('T');
+  const bool restore_hot_end_temperature = parser.boolval('T');
   const bool restore_fanspeed = parser.boolval('U');
+  #if HAS_HEATED_BED
+  const bool restore_bed_temperature = parser.boolval('V');
+  #endif
   // process_subcommands_now
   if(restore_feedrate){
     feedrate_mm_s = stored_feedrate[slot];
@@ -86,11 +89,18 @@ void GcodeSuite::G61(int8_t slot/*=-1*/) {
       thermalManager.set_fan_speed(i, stored_fanspeed[slot][i]);
     }
   }
-  if(restore_temperature) {
+  if(restore_hot_end_temperature) {
     char buff[13];
-    snprintf(buff, sizeof(buff), "M104 S%d", (int) stored_temperature[slot]);
+    snprintf(buff, sizeof(buff), "M104 S%d", (int) stored_hot_end_temperature[slot]);
     gcode.process_subcommands_now(buff);
   }
+  #if HAS_HEATED_BED
+  if(restore_bed_temperature) {
+    char buff[13];
+    snprintf(buff, sizeof(buff), "M140 S%d", (int) stored_bed_temperature[slot]);
+    gcode.process_subcommands_now(buff);
+  }
+  #endif
 
   // Apply any given feedrate over 0.0
   REMEMBER(saved, feedrate_mm_s);

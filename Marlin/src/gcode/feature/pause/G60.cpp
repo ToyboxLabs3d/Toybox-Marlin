@@ -104,8 +104,11 @@ void GcodeSuite::G60() {
 
   stored_axis_relative[slot] = gcode.axis_relative;
   stored_feedrate[slot] = feedrate_mm_s;
-  stored_temperature[slot] = thermalManager.degTargetHotend(0);
+  stored_hot_end_temperature[slot] = thermalManager.degTargetHotend(0);
   memcpy(stored_fanspeed[slot], thermalManager.fan_speed, sizeof(thermalManager.fan_speed));
+  #if HAS_HEATED_BED
+  stored_bed_temperature[slot] = thermalManager.degTargetBed();
+  #endif
 
   did_save_position.set(slot);
   report_stored_position(slot);

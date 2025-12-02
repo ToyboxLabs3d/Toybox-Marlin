@@ -115,7 +115,10 @@ xyze_pos_t destination; // {0}
   relative_t stored_axis_relative[SAVED_POSITIONS];
   feedRate_t stored_feedrate[SAVED_POSITIONS];
   uint8_t stored_fanspeed[SAVED_POSITIONS][FAN_COUNT];
-  celsius_t stored_temperature[SAVED_POSITIONS];
+  celsius_t stored_hot_end_temperature[SAVED_POSITIONS];
+  #if HAS_HEATED_BED
+  celsius_t stored_bed_temperature[SAVED_POSITIONS];
+  #endif
 #endif
 
 // The active extruder (tool). Set with T<extruder> command.

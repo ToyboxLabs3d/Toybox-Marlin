@@ -57,7 +57,10 @@ extern xyze_pos_t current_position,  // High-level current tool position
   extern relative_t stored_axis_relative[SAVED_POSITIONS];
   extern feedRate_t stored_feedrate[SAVED_POSITIONS];
   extern uint8_t stored_fanspeed[SAVED_POSITIONS][FAN_COUNT];
-  extern celsius_t stored_temperature[SAVED_POSITIONS];
+  extern celsius_t stored_hot_end_temperature[SAVED_POSITIONS];
+  #if HAS_HEATED_BED
+  extern celsius_t stored_bed_temperature[SAVED_POSITIONS];
+  #endif
 #endif
 
 // Scratch space for a cartesian result
