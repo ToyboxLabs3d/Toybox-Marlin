@@ -5,9 +5,7 @@
 #include "../../module/temperature.h"
 #include "../../module/planner.h"
 
-
-#if ENABLED(TOYBOX_FAST_CMDS)
-
+#if ENABLED(TOYBOX_FAST_CMDS) || HAS_FILAMENT_SENSOR
 static void clear_queue_and_serial(){
     do{
         SERIAL_IMPL.flush();
@@ -20,6 +18,9 @@ static void clear_queue_and_serial(){
         queue.get_available_commands(); // refill the queue from serial
     } while (queue.has_commands_queued());
 }
+#endif
+
+#if ENABLED(TOYBOX_FAST_CMDS)
 
 void fast_cancel(){
     SERIAL_ECHOLNPGM(">> Fast Cancel");
@@ -36,6 +37,7 @@ void fast_pause(){
     planner.need_to_clear = true;
     clear_queue_and_serial();
     planner.synchronize();
+    planner.process_cleared_lines();
     SERIAL_ECHO_MSG("synced-after-stop");
 }
 
@@ -56,6 +58,7 @@ void on_filament_runout(){
     clear_queue_and_serial();
 
     planner.synchronize();
+    planner.process_cleared_lines();
     // SERIAL_ECHO_MSG("synchronized planner after runout event");
     SERIAL_ECHO_MSG("synced-after-stop");
 }

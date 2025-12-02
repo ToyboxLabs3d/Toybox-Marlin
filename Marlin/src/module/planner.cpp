@@ -253,8 +253,8 @@ float Planner::previous_nominal_speed;
 #if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
 std::atomic<bool> Planner::need_to_clear = false; 
 
-std::atomic<int32_t> Planner::first_line_cleared = NO_LINE_NUMBER;
-int32_t Planner::last_line_number_processed = NO_LINE_NUMBER;
+std::atomic<long> Planner::_first_line_cleared = NO_LINE_NUMBER;
+long Planner::_last_line_number_processed = NO_LINE_NUMBER;
 #endif
 /**
  * Class and Instance Methods
@@ -735,6 +735,16 @@ void Planner::init() {
   #endif
 #endif
 
+
+#if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
+void Planner::process_cleared_lines() {
+  long line = _first_line_cleared.exchange(NO_LINE_NUMBER);
+  if(line != NO_LINE_NUMBER){ 
+    SERIAL_ECHO_MSG("first_line_cleared: ", line);
+  } 
+}
+#endif
+
 /**
  * Get the current block for processing
  * and mark the block as busy.
@@ -763,12 +773,16 @@ block_t* Planner::get_current_block() {
     block_t * const block = &block_buffer[block_buffer_tail];
 
   #if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
-    if(need_to_clear && last_line_number_processed != block->line_number){
-      first_line_cleared = block->line_number;
-      last_line_number_processed = NO_LINE_NUMBER;
+    if(need_to_clear && _last_line_number_processed != block->line_number){
+      _first_line_cleared = block->line_number;
+      // _last_line_number_processed = NO_LINE_NUMBER;
       clear_block_buffer();
+      need_to_clear = false;
       return nullptr;
     }
+  #endif
+  #if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
+      _last_line_number_processed = block->line_number;
   #endif
     // No trapezoid calculated? Don't execute yet.
     if (block->flag.recalculate) return nullptr;
@@ -779,9 +793,6 @@ block_t* Planner::get_current_block() {
     // As this block is busy, advance the nonbusy block pointer
     block_buffer_nonbusy = next_block_index(block_buffer_tail);
 
-#if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
-    last_line_number_processed = block->line_number;
-#endif
     // Return the block
     return block;
   }

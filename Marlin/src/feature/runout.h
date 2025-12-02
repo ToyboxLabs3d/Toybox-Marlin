@@ -176,11 +176,6 @@ class TFilamentMonitor : public FilamentMonitorBase {
         }
       }
 
-      int32_t first_line_cleared = planner.first_line_cleared.exchange(-1);
-      if(first_line_cleared != -1) {
-        SERIAL_ECHO_MSG("first_line_cleared: ", first_line_cleared);
-      }
-
       if (enabled && !filament_ran_out && should_monitor_runout()) {
         if (ran_out) {
           SERIAL_ECHO_MSG("handling runout.");

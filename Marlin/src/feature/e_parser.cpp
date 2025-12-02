@@ -294,6 +294,7 @@ void EmergencyParser::handle_emergency_events(State &state) {
     state.fast_cancel_line_number = EP_NO_CMD;
     fast_cancel();
   } else if(state.fast_pause_line_number != EP_NO_CMD){
+    SERIAL_ECHOLN("EmergencyParser: Handling fast pause");
     if(state.fast_pause_line_number == EP_CMD_WITHOUT_LINE_NUMBER){
       SERIAL_ECHOLN("ok");
     }else{
