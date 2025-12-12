@@ -1161,6 +1161,8 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
       #if HAS_FILAMENT_SENSOR
       case 10003: M10003(); break;                              // M10003
       #endif
+      case 10004: break;                                        // M10004 do nothing, handled by emergency parser         
+      case 10005: break;                                        // M10005 do nothing, handled by emergency parser
       default: parser.unknown_command_warning(); break;
     }
     break;
@@ -1182,7 +1184,16 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
       parser.unknown_command_warning();
   }
 
-  if (!no_ok) queue.ok_to_send();
+  if (!no_ok
+  #if ENABLED(TOYBOX_FAST_CMDS)
+    // Toybox Alex: If we're in the middle of a fast cancel, then we just cleared the queue.
+    // This means the current command is no longer valid. If we try to send and "ok" it will
+    // just be the wrong line number.
+    && !stop_running_move
+  #endif
+  ) {
+    queue.ok_to_send();
+  }
 
   SERIAL_IMPL.msgDone(); // Call the msgDone serial hook to signal command processing done
 }
@@ -1211,6 +1222,7 @@ void GcodeSuite::process_next_command() {
     #endif
   }
 
+  // SERIAL_ECHO_MSG("Parsing command: ", command.buffer);
   // Parse the next command in the queue
   parser.parse(command.buffer);
   process_parsed_command();

@@ -95,6 +95,12 @@ void GcodeSuite::G0_G1(TERN_(HAS_FAST_MOVES, const bool fast_move/*=false*/)) {
 
   #endif // FWRETRACT
 
+  #if ENABLED(TOYBOX_FAST_CMDS)
+    if(stop_running_move) {
+      return;
+    }
+  #endif
+
   #if ANY(IS_SCARA, POLAR)
     fast_move ? prepare_fast_move_to_destination() : prepare_line_to_destination();
   #else

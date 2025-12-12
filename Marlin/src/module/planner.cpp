@@ -250,11 +250,11 @@ float Planner::previous_nominal_speed;
   volatile uint32_t Planner::block_buffer_runtime_us = 0;
 #endif
 
-#if HAS_FILAMENT_SENSOR
+#if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
 std::atomic<bool> Planner::need_to_clear = false; 
 
-std::atomic<int32_t> Planner::first_line_cleared = -1;
-int32_t Planner::last_line_number_processed = -1;
+std::atomic<long> Planner::_first_line_cleared = NO_LINE_NUMBER;
+long Planner::_last_line_number_processed = NO_LINE_NUMBER;
 #endif
 /**
  * Class and Instance Methods
@@ -735,6 +735,16 @@ void Planner::init() {
   #endif
 #endif
 
+
+#if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
+void Planner::process_cleared_lines() {
+  long line = _first_line_cleared.exchange(NO_LINE_NUMBER);
+  if(line != NO_LINE_NUMBER){ 
+    SERIAL_ECHO_MSG("first_line_cleared: ", line);
+  } 
+}
+#endif
+
 /**
  * Get the current block for processing
  * and mark the block as busy.
@@ -762,13 +772,17 @@ block_t* Planner::get_current_block() {
     // If we are here, there is no excuse to deliver the block
     block_t * const block = &block_buffer[block_buffer_tail];
 
-  #if HAS_FILAMENT_SENSOR
-    if(need_to_clear && last_line_number_processed != block->line_number){
-      first_line_cleared = block->line_number;
-      last_line_number_processed = -1;
+  #if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
+    if(need_to_clear && _last_line_number_processed != block->line_number){
+      _first_line_cleared = block->line_number;
+      // _last_line_number_processed = NO_LINE_NUMBER;
       clear_block_buffer();
+      need_to_clear = false;
       return nullptr;
     }
+  #endif
+  #if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
+      _last_line_number_processed = block->line_number;
   #endif
     // No trapezoid calculated? Don't execute yet.
     if (block->flag.recalculate) return nullptr;
@@ -779,9 +793,6 @@ block_t* Planner::get_current_block() {
     // As this block is busy, advance the nonbusy block pointer
     block_buffer_nonbusy = next_block_index(block_buffer_tail);
 
-#if HAS_FILAMENT_SENSOR
-    last_line_number_processed = block->line_number;
-#endif
     // Return the block
     return block;
   }
@@ -789,7 +800,7 @@ block_t* Planner::get_current_block() {
   // The queue became empty
   TERN_(HAS_WIRED_LCD, clear_block_buffer_runtime()); // paranoia. Buffer is empty now - so reset accumulated time to zero.
 
-  #if HAS_FILAMENT_SENSOR
+  #if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
   need_to_clear = false;
   #endif
 
@@ -1746,7 +1757,13 @@ bool Planner::_buffer_steps(const xyze_long_t &target
   // If we are cleaning, do not accept queuing of movements
   // This must be after get_next_free_block() because it calls idle()
   // where cleaning_buffer_counter can be changed
-  if (cleaning_buffer_counter) return false;
+  if (cleaning_buffer_counter 
+    #if ENABLED(TOYBOX_FAST_CMDS)
+      || stop_running_move
+    #endif
+  ) {
+    return false;
+  }
 
   // Fill the block with the specified movement
   float minimum_planner_speed_sqr;
@@ -1850,7 +1867,7 @@ bool Planner::_populate_block(
     );
   //*/
 
-  #if HAS_FILAMENT_SENSOR
+  #if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
   block->line_number = parser.get_line_number();
   #endif
   
@@ -2863,7 +2880,13 @@ bool Planner::buffer_segment(const abce_pos_t &abce
 ) {
 
   // If we are cleaning, do not accept queuing of movements
-  if (cleaning_buffer_counter) return false;
+  if (cleaning_buffer_counter 
+    #if ENABLED(TOYBOX_FAST_CMDS)
+      || stop_running_move
+    #endif
+  ) {
+    return false;
+  }
 
   // When changing extruders recalculate steps corresponding to the E position
   #if ENABLED(DISTINCT_E_FACTORS)
@@ -2986,6 +3009,11 @@ bool Planner::buffer_line(const xyze_pos_t &cart, const_feedRate_t fr_mm_s
   , const uint8_t extruder/*=active_extruder*/
   , const PlannerHints &hints/*=PlannerHints()*/
 ) {
+  #if ENABLED(TOYBOX_FAST_CMDS)
+    if(stop_running_move) {
+      return false;
+    }
+  #endif
   xyze_pos_t machine = cart;
   TERN_(HAS_POSITION_MODIFIERS, apply_modifiers(machine));
 

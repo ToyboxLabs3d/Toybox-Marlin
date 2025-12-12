@@ -228,6 +228,16 @@ void GCodeQueue::enqueue_now_P(PGM_P const pgcode) {
   }
 }
 
+
+void GCodeQueue::clear(){
+  ring_buffer.clear();
+  #if ENABLED(TOYBOX_FAST_CMDS)
+  for (uint8_t i = 0; i < NUM_SERIAL; i++) {
+    serial_state[i].count = 0;
+  }
+  #endif
+}
+
 /**
  * Send an "ok" message to the host, indicating
  * that a command was successfully processed.

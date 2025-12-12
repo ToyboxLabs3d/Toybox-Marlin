@@ -93,7 +93,7 @@ struct SerialBase {
     const bool ep_enabled;
     EmergencyParser::State emergency_state;
     inline bool emergency_parser_enabled() { return ep_enabled; }
-    SerialBase(bool ep_capable) : ep_enabled(ep_capable), emergency_state(EmergencyParser::State::EP_RESET) {}
+    SerialBase(bool ep_capable) : ep_enabled(ep_capable), emergency_state() {}
   #else
     SerialBase(const bool) {}
   #endif

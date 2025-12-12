@@ -45,7 +45,7 @@
 
 #include "motion.h"
 #include "../gcode/queue.h"
-#if HAS_FILAMENT_SENSOR
+#if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
 #include <atomic>
 #endif
 
@@ -556,14 +556,16 @@ class Planner {
         refresh_frequency_limit();
       }
     #endif
-    #if HAS_FILAMENT_SENSOR
+    #if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
     static std::atomic<bool> need_to_clear;
-    static std::atomic<int32_t> first_line_cleared;
+    static void process_cleared_lines();
     #endif
+    
     private:
     
-    #if HAS_FILAMENT_SENSOR
-    static int32_t last_line_number_processed;
+    #if HAS_FILAMENT_SENSOR || ENABLED(TOYBOX_FAST_CMDS)
+    static long _last_line_number_processed;
+    static std::atomic<long> _first_line_cleared;
     #endif
     /**
      * Speed of previous path line segment

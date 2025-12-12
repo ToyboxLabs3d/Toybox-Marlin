@@ -13,7 +13,16 @@ void GcodeSuite::M10003() {
     while(millis() - start < 1000) {
         idle();
     }
-    queue.clear();
+    do{
+        SERIAL_IMPL.flush();
+        for(auto i = 0; i < NUM_SERIAL; i++){
+            while (SERIAL_IMPL.read(i) != -1) {
+                // Just ignore
+            }
+        }
+        queue.clear(); // empty the queue
+        queue.get_available_commands(); // refill the queue from serial
+    } while (queue.has_commands_queued());
     SERIAL_ECHO_MSG("queue cleared");
 }
 

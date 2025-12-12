@@ -111,7 +111,7 @@ public:
   /**
    * Clear the Marlin command queue
    */
-  static void clear() { ring_buffer.clear(); }
+  static void clear();
 
   /**
    * Next Injected Command (PROGMEM) pointer. (nullptr == empty)

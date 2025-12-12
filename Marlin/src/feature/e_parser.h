@@ -27,12 +27,19 @@
 
 #include "../inc/MarlinConfigPre.h"
 
+#if ENABLED(TOYBOX_FAST_CMDS)
+#include <atomic>
+
+#define EP_NO_CMD (-1000l)
+#define EP_CMD_WITHOUT_LINE_NUMBER (-2000l)
+#endif
+
 class EmergencyParser {
 
 public:
 
   // Currently looking for: M108, M112, M410, M524, M876 S[0-9], S000, P000, R000
-  enum State : uint8_t {
+  enum StateMachineState : uint8_t {
     EP_RESET,
     EP_N,
     EP_M,
@@ -58,7 +65,21 @@ public:
       EP_ctrl,
       EP_K, EP_KI, EP_KIL, EP_KILL,
     #endif
+    #if ENABLED(TOYBOX_FAST_CMDS)
+      EP_M100, EP_M1000, EP_M10004, EP_M10005,
+    #endif
     EP_IGNORE // to '\n'
+  };
+
+  struct State {
+    #if ENABLED(TOYBOX_FAST_CMDS)
+      char line_number_buffer[16] = { 0 };
+      size_t line_number_buffer_pos = 0;
+      std::atomic<long> fast_cancel_line_number = EP_NO_CMD;
+      std::atomic<long> fast_pause_line_number = EP_NO_CMD;
+      bool handling_emergency_events = false;
+    #endif
+    StateMachineState state_machine_state = EP_RESET;
   };
 
   static bool killed_by_M112;
@@ -78,6 +99,9 @@ public:
   FORCE_INLINE static void disable() { enabled = false; }
 
   static void update(State &state, const uint8_t c);
+#if ENABLED(TOYBOX_FAST_CMDS)
+  static void handle_emergency_events(State &state);
+#endif
 
 private:
   static bool enabled;

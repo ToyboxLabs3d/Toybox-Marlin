@@ -81,6 +81,9 @@
 
  #endif
 
+
+#define TOYBOX_FAST_CMDS
+
 // @section serial
 
 /**
@@ -585,7 +588,7 @@
 #define TEMP_SENSOR_6 0
 #define TEMP_SENSOR_7 0
 #ifdef ENV_CHARLIE
-    #define TEMP_SENSOR_BED 0 // Toybox Alex TODO: put this back when we get the heated bed back.
+    #define TEMP_SENSOR_BED 1 // Toybox Alex: should be 1 for heated bed, 0 otherwise
 #elif defined(ENV_ALPHA3)
     #define TEMP_SENSOR_BED 0
 #else
@@ -656,7 +659,7 @@
 
 // Below this temperature the heater will be switched off
 // because it probably indicates a broken thermistor wire.
-#define HEATER_0_MINTEMP   1
+#define HEATER_0_MINTEMP   -10
 #define HEATER_1_MINTEMP   5
 #define HEATER_2_MINTEMP   5
 #define HEATER_3_MINTEMP   5
@@ -1716,7 +1719,7 @@
 #ifdef ENV_ALPHA3
   #define PROBING_MARGIN 10
 #elif defined(ENV_CHARLIE)
-  #define PROBING_MARGIN 10
+  #define PROBING_MARGIN 20
 #endif
 
 // X and Y axis travel speed between probes.
@@ -2211,13 +2214,13 @@
  *   leveling in steps so you can manually adjust the Z height at each grid-point.
  *   With an LCD controller the process is guided step-by-step.
  */
-//#define AUTO_BED_LEVELING_3POINT
-//#define AUTO_BED_LEVELING_LINEAR
+  //#define AUTO_BED_LEVELING_3POINT
+  //#define AUTO_BED_LEVELING_LINEAR
 #ifdef ENV_CHARLIE
   #define AUTO_BED_LEVELING_BILINEAR
 #endif
 //#define AUTO_BED_LEVELING_UBL
-//#define MESH_BED_LEVELING
+  //#define MESH_BED_LEVELING
 
 /**
  * Commands to execute at the start of G29 probing,
@@ -2268,8 +2271,7 @@
    */
   #define ENABLE_LEVELING_FADE_HEIGHT
   #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
-     // Toybox Alex: bed will be fairly flat, but still potentially tilted, 
-     // so this shouldn't be too low. Setting it too low will cause the nozzle
+     // Toybox Alex: This shouldn't be too low. Setting it too low will cause the nozzle
      // to grind against the print.
     #define DEFAULT_LEVELING_FADE_HEIGHT 15.0
   #endif
