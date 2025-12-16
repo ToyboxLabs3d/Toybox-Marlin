@@ -50,6 +50,10 @@ void GcodeSuite::M110() {
     seen_param = true;
   }
   if (!seen_param) {
-    SERIAL_ECHOLNPGM(STR_LINE_NO, queue.get_current_line_number());
+    if(queue.get_line_number_modulus() == UINT32_MAX){
+      SERIAL_ECHOLNPGM(STR_LINE_NO, queue.get_current_line_number());
+    } else {
+      SERIAL_ECHOLNPGM(STR_LINE_NO, queue.get_current_line_number(), ", M", queue.get_line_number_modulus());
+    }
   }
 }
