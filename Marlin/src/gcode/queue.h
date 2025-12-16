@@ -216,6 +216,7 @@ public:
   static void set_current_line_number(long n) { serial_state[ring_buffer.command_port().index].last_N = n; }
 
   static void set_line_number_modulus(uint32_t m) { serial_state[ring_buffer.command_port().index].line_number_modulus = m; }
+  static uint32_t get_line_number_modulus() { return serial_state[ring_buffer.command_port().index].line_number_modulus; }
 
 
   /**
