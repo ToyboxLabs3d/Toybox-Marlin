@@ -1340,6 +1340,11 @@ private:
    #if HAS_FILAMENT_SENSOR
    static void M10003();
    #endif
+   #ifdef ENV_ALPHA4
+   static void M10010();
+   static void M10011();
+   static void M10012();
+   #endif
 
   static void T(const int8_t tool_index) IF_DISABLED(HAS_TOOLCHANGE, { UNUSED(tool_index); });
 

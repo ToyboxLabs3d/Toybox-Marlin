@@ -58,7 +58,9 @@
   #define PROBE_HIT_STATE Z_MIN_ENDSTOP_HIT_STATE
 #endif
 #define PROBE_TRIGGERED() (PROBE_READ() == PROBE_HIT_STATE)
-
+#ifdef ENV_ALPHA4
+#define PROBE_TRIGGERED_CS1237() (cs1237_trigger() == PROBE_HIT_STATE)
+#endif
 // In BLTOUCH HS mode, the probe travels in a deployed state.
 #define Z_TWEEN_SAFE_CLEARANCE SUM_TERN(BLTOUCH, Z_CLEARANCE_BETWEEN_PROBES, bltouch.z_extra_clearance())
 

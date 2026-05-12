@@ -77,6 +77,11 @@
   #include "../feature/bedlevel/bdl/bdl.h"
 #endif
 
+#ifdef ENV_ALPHA4
+#include "../HAL/HC32/cs1237.h"
+#include "../HAL/HC32/cs1237_app.h"
+#endif
+
 // Relative Mode. Enable with G91, disable with G90.
 bool relative_mode; // = false
 
@@ -2794,6 +2799,12 @@ void prepare_line_to_destination() {
 
         // Tell the Bed Distance Sensor we're Z homing
         TERN_(BD_SENSOR, bdl.config_state = BDS_HOMING_Z);
+// seems like this doesn't do anything.
+#ifdef ENV_ALPHA4
+        //CS1237 initial values
+        cs1237_set_zero(&cs1237);
+        cs1237.homing_flg = 1;
+#endif
       }
     #endif
 

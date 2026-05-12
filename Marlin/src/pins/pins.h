@@ -942,7 +942,9 @@
 #elif MB(ESP32_HC_V4_0)
   #include "hc32f4/pins_ESP32_HC_V4_0.h"            // HC32F460                             env:HC32F460C_ASD_HC_V4_0
 #elif MB(ESP32_HC_V1_5)
-  #include "hc32f4/pins_ESP32_HC_V1_5.h"            // HC32F460                             env:HC32F460C_ASD_HC_V1_5  
+  #include "hc32f4/pins_ESP32_HC_V1_5.h"            // HC32F460                             env:HC32F460C_ASD_HC_V1_5 
+#elif MB(ESP32_HC_V2_4)
+  #include "hc32f4/pins_ESP32_HC_V2_4.h"            // HC32F460                             env:HC32F460C_ASD_HC_V2_4
 #elif MB(ESP32_HC_V4_1)
   #include "hc32f4/pins_ESP32_HC_V4_1.h"            // HC32F460                             env:HC32F460C_ASD_HC_V4_1  
 //

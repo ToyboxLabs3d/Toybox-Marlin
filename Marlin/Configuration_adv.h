@@ -309,7 +309,7 @@
  */
 #if ALL(HAS_HOTEND, THERMAL_PROTECTION_HOTENDS)
   #define THERMAL_PROTECTION_PERIOD        40 // (seconds)
-  #ifdef ENV_ALPHA3
+  #if defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
     #define THERMAL_PROTECTION_HYSTERESIS     4 // (°C
 #elif defined(ENV_CHARLIE)
   #define THERMAL_PROTECTION_HYSTERESIS     20//4 // (°C)
@@ -335,7 +335,7 @@
    * and/or decrease WATCH_TEMP_INCREASE. WATCH_TEMP_INCREASE should not be set
    * below 2.
    */
-#ifdef ENV_ALPHA3
+#if defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
   #define WATCH_TEMP_PERIOD  40               // (seconds)
 #elif defined(ENV_CHARLIE)
   #define WATCH_TEMP_PERIOD  60               // (seconds)
@@ -702,7 +702,7 @@
 
 #ifdef ENV_CHARLIE
 #define E0_AUTO_FAN_PIN PC4
-#elif defined(ENV_ALPHA3)
+#elif defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
 #define E0_AUTO_FAN_PIN PA8
 #endif
 
@@ -1227,7 +1227,7 @@
  *
  * Tune with M593 D<factor> F<frequency>
  */
-#ifdef ENV_ALPHA3
+#if defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
   #define INPUT_SHAPING_X
   #define INPUT_SHAPING_Y
   #define INPUT_SHAPING_Z

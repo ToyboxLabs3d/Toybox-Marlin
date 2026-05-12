@@ -75,6 +75,8 @@
      #define MOTHERBOARD BOARD_ESP32_HC_V4_1 
    #elif defined(ENV_ALPHA3)
      #define MOTHERBOARD BOARD_ESP32_HC_V1_5  
+  #elif defined(ENV_ALPHA4)
+     #define MOTHERBOARD BOARD_ESP32_HC_V2_4
    #else 
      #define MOTHERBOARD BOARD_RAMPS_14_EFB
    #endif
@@ -589,8 +591,6 @@
 #define TEMP_SENSOR_7 0
 #ifdef ENV_CHARLIE
     #define TEMP_SENSOR_BED 1 // Toybox Alex: should be 1 for heated bed, 0 otherwise
-#elif defined(ENV_ALPHA3)
-    #define TEMP_SENSOR_BED 0
 #else
     #define TEMP_SENSOR_BED 0
 #endif
@@ -729,10 +729,6 @@
       #define DEFAULT_Kp 28.205
       #define DEFAULT_Ki 5.530
       #define DEFAULT_Kd 35.961
-	#elif defined(ENV_ALPHA3)
-        #define DEFAULT_Kp  22.20
-        #define DEFAULT_Ki   1.08
-        #define DEFAULT_Kd 114.00	
 	#else
         #define DEFAULT_Kp  22.20
         #define DEFAULT_Ki   1.08
@@ -1260,7 +1256,11 @@
 #define Y_MIN_ENDSTOP_HIT_STATE HIGH
 #define Y_MAX_ENDSTOP_HIT_STATE LOW
 #define Z_MIN_ENDSTOP_HIT_STATE LOW
+#ifdef ENV_ALPHA4
+#define Z_MAX_ENDSTOP_HIT_STATE LOW
+#else
 #define Z_MAX_ENDSTOP_HIT_STATE HIGH
+#endif
 #define I_MIN_ENDSTOP_HIT_STATE HIGH
 #define I_MAX_ENDSTOP_HIT_STATE HIGH
 #define J_MIN_ENDSTOP_HIT_STATE HIGH
@@ -1325,7 +1325,7 @@
 
 #ifdef ENV_CHARLIE
   #define DEFAULT_AXIS_STEPS_PER_UNIT   { 94.1, 94.1, 800, 702.2 } //729.38
-#elif defined(ENV_ALPHA3)
+#elif defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
   #define DEFAULT_AXIS_STEPS_PER_UNIT   { 94.15, 94.15, 399.5, 90 }
 #else 
   #define DEFAULT_AXIS_STEPS_PER_UNIT   { 80, 80, 400, 500 }
@@ -1344,7 +1344,7 @@
 
 #ifdef ENV_CHARLIE
   #define DEFAULT_MAX_FEEDRATE          { 250, 250, 15, 30 }
-#elif defined(ENV_ALPHA3)
+#elif defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
   #define DEFAULT_MAX_FEEDRATE          { 300, 300, 10, 100 }
 #else 
   #define DEFAULT_MAX_FEEDRATE          { 300, 300, 5, 25 }
@@ -1364,7 +1364,7 @@
 #ifdef ENV_CHARLIE
   #define DEFAULT_MAX_ACCELERATION      { 3000, 3000, 1000, 5000 }
  // #define DEFAULT_MAX_ACCELERATION      { 10000, 10000, 1000, 5000 }
-#elif defined(ENV_ALPHA3)
+#elif defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
   #define DEFAULT_MAX_ACCELERATION      { 5000, 5000, 100, 5000 }
 #else 
   #define DEFAULT_MAX_ACCELERATION      { 3000, 3000, 100, 10000 }
@@ -1389,7 +1389,7 @@
   #define DEFAULT_ACCELERATION          2000    // X, Y, Z and E acceleration for printing moves
   #define DEFAULT_RETRACT_ACCELERATION  5000     // E acceleration for retracts
   #define DEFAULT_TRAVEL_ACCELERATION   2000    // X, Y, Z acceleration for travel (non printing) moves
-#elif defined(ENV_ALPHA3)
+#elif defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
   #define DEFAULT_ACCELERATION          5000    // X, Y, Z and E acceleration for printing moves
   #define DEFAULT_RETRACT_ACCELERATION  1000    // E acceleration for retracts
   #define DEFAULT_TRAVEL_ACCELERATION   6000    // X, Y, Z acceleration for travel (non printing) moves
@@ -1464,7 +1464,10 @@
  * The probe replaces the Z-MIN endstop and is used for Z homing.
  * (Automatically enables USE_PROBE_FOR_Z_HOMING.)
  */
+
+#ifndef ENV_ALPHA4
 #define Z_MIN_PROBE_USES_Z_MIN_ENDSTOP_PIN
+#endif
 
 // Force the use of the probe for Z-axis homing
 //#define USE_PROBE_FOR_Z_HOMING
@@ -1483,7 +1486,9 @@
  *    - Normally-open (NO) also connect to 5V.
  */
 #ifdef ENV_CHARLIE
-#define Z_MIN_PROBE_PIN  PB12  
+#define Z_MIN_PROBE_PIN  PB12
+#elif defined(ENV_ALPHA4)
+#define Z_MIN_PROBE_PIN  PB3        //对于ENV_ALPHA4，此管脚只是为了编译，不存在功能。已被cs1237替代。
 #endif
 /**
  * Probe Type
@@ -1503,7 +1508,7 @@
  * A Fix-Mounted Probe either doesn't deploy or needs manual deployment.
  *   (e.g., an inductive probe or a nozzle-based probe-switch.)
  */
-#ifdef ENV_CHARLIE
+#if defined(ENV_CHARLIE) || defined(ENV_ALPHA4)
 #define FIX_MOUNTED_PROBE
 #endif
 /**
@@ -1704,6 +1709,8 @@
  */
 #ifdef ENV_ALPHA3
 #define NOZZLE_TO_PROBE_OFFSET { 10, 10, 0 }
+#elif defined(ENV_ALPHA4)
+#define NOZZLE_TO_PROBE_OFFSET { 0, 0, 0 }
 #elif defined(ENV_CHARLIE)
 #define NOZZLE_TO_PROBE_OFFSET { 11, 23, -3.5 }
 #endif
@@ -1716,11 +1723,26 @@
 
 // Most probes should stay away from the edges of the bed, but
 // with NOZZLE_AS_PROBE this can be negative for a wider probing area.
-#ifdef ENV_ALPHA3
+#if defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
   #define PROBING_MARGIN 10
 #elif defined(ENV_CHARLIE)
   #define PROBING_MARGIN 20
 #endif
+
+
+#ifdef ENV_ALPHA4
+
+// X and Y axis travel speed between probes.
+// Leave undefined to use the average of the current XY homing feedrate.
+#define XY_PROBE_FEEDRATE    (50*60) // (mm/min)
+
+// Feedrate for the first approach when double-probing (MULTIPLE_PROBING == 2)
+#define Z_PROBE_FEEDRATE_FAST  (10*60) // (mm/min)
+
+// Feedrate for the "accurate" probe of each point
+#define Z_PROBE_FEEDRATE_SLOW  (5*60)  // (mm/min) 
+
+#else
 
 // X and Y axis travel speed between probes.
 // Leave undefined to use the average of the current XY homing feedrate.
@@ -1732,6 +1754,8 @@
 // Feedrate for the "accurate" probe of each point
 // Toybox Alex: M48 gave better repeatability with 10 mm/sec than 5 mm/sec
 #define Z_PROBE_FEEDRATE_SLOW (10*60) // (mm/min)
+
+#endif
 
 /**
  * Probe Activation Switch
@@ -1893,7 +1917,7 @@
   #define INVERT_X_DIR true 
   #define INVERT_Y_DIR false
   #define INVERT_Z_DIR false
-#elif defined(ENV_ALPHA3)
+#elif defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
   #define INVERT_X_DIR true 
   #define INVERT_Y_DIR false
   #define INVERT_Z_DIR true
@@ -1909,7 +1933,7 @@
 // @section extruder
 
 // For direct drive extruder v9 set to true, for geared extruder set to false.
-#ifdef ENV_ALPHA3
+#if defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
   #define INVERT_E0_DIR true
 #elif defined(ENV_CHARLIE)
   #define INVERT_E0_DIR false
@@ -1935,7 +1959,7 @@
  */
 //#define Z_IDLE_HEIGHT Z_HOME_POS
 
-#ifdef ENV_ALPHA3
+#if defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
 #define Z_CLEARANCE_FOR_HOMING  2   // (mm) Minimal Z height before homing (G28) for Z clearance above the bed, clamps, ...
 #endif                                      // You'll need this much clearance above Z_MAX_POS to avoid grinding.
 
@@ -1946,9 +1970,16 @@
 
 // Direction of endstops when homing; 1=MAX, -1=MIN
 // :[-1,1]
+
+#ifdef ENV_ALPHA4
+#define X_HOME_DIR 1
+#define Y_HOME_DIR 1
+#define Z_HOME_DIR 1
+#else
 #define X_HOME_DIR 1
 #define Y_HOME_DIR 1
 #define Z_HOME_DIR -1
+#endif
 //#define I_HOME_DIR -1
 //#define J_HOME_DIR -1
 //#define K_HOME_DIR -1
@@ -1979,7 +2010,7 @@
 #ifdef ENV_CHARLIE
   #define X_BED_SIZE 190
   #define Y_BED_SIZE 190
-#elif defined(ENV_ALPHA3)
+#elif defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
   #define X_BED_SIZE 80
   #define Y_BED_SIZE 80
 #else 
@@ -1996,7 +2027,7 @@
 
 #ifdef ENV_CHARLIE
   #define Z_MAX_POS 190
-#elif defined(ENV_ALPHA3)
+#elif defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
   #define Z_MAX_POS 90
 #else 
   #define Z_MAX_POS 200
@@ -2216,7 +2247,7 @@
  */
   //#define AUTO_BED_LEVELING_3POINT
   //#define AUTO_BED_LEVELING_LINEAR
-#ifdef ENV_CHARLIE
+#if defined(ENV_CHARLIE) || defined(ENV_ALPHA4)
   #define AUTO_BED_LEVELING_BILINEAR
 #endif
 //#define AUTO_BED_LEVELING_UBL
@@ -2303,7 +2334,11 @@
 #if ANY(AUTO_BED_LEVELING_LINEAR, AUTO_BED_LEVELING_BILINEAR)
 
   // Set the number of grid points per dimension.
+  #ifdef ENV_ALPHA4
+  #define GRID_MAX_POINTS_X 3 
+  #else
   #define GRID_MAX_POINTS_X 6
+  #endif
   #define GRID_MAX_POINTS_Y GRID_MAX_POINTS_X
 
   // Probe along the Y axis, advancing X after each column
@@ -2469,6 +2504,8 @@
 // Homing speeds (linear=mm/min, rotational=°/min)
 #ifdef ENV_CHARLIE
 #define HOMING_FEEDRATE_MM_M { (50*60), (50*60), (4*60) } // X, Y, Z
+#elif defined(ENV_ALPHA4)
+#define HOMING_FEEDRATE_MM_M { (50*60), (50*60), (10*60) }
 #else
 #define HOMING_FEEDRATE_MM_M { (50*60), (50*60), (4*60) }
 #endif

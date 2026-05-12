@@ -420,8 +420,10 @@ inline bool process_line_done(uint8_t &sis, char (&buff)[MAX_CMD_SIZE], int &ind
 }
 
 
-static bool current_or_last_line_number(int64_t line_number, int64_t current_line_number, int64_t modulus){
-  return line_number == current_line_number || line_number == ((current_line_number -1 + modulus) % modulus);
+static bool current_or_last_line_number(int64_t line_number, int64_t current_line_number, int64_t modulus) {
+  return line_number == current_line_number                        // 重复行
+      || line_number == (current_line_number + 1) % modulus       // 取模递增（正常情形）
+      || line_number == current_line_number + 1;                  // 线性递增（超过模数时兜底）
 }
 
 /**

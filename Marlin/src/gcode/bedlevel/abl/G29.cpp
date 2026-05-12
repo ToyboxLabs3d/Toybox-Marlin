@@ -59,6 +59,11 @@
 #define DEBUG_OUT ENABLED(DEBUG_LEVELING_FEATURE)
 #include "../../../core/debug_out.h"
 
+#ifdef ENV_ALPHA4
+#include "../../../HAL/HC32/cs1237.h"
+#include "../../../HAL/HC32/cs1237_app.h"
+#endif
+
 #if ABL_USES_GRID
   #if ENABLED(PROBE_Y_FIRST)
     #define PR_OUTER_VAR  abl.meshCount.x
@@ -284,7 +289,10 @@ G29_TYPE GcodeSuite::G29() {
    * On the initial G29 fetch command parameters.
    */
   if (!g29_in_progress) {
-
+#ifdef ENV_ALPHA4
+    cs1237.leveling_flg = 1;
+    cs1237_set_zero(&cs1237);
+#endif
     probe.use_probing_tool();
 
     #ifdef EVENT_GCODE_BEFORE_G29
@@ -1043,6 +1051,9 @@ G29_TYPE GcodeSuite::G29() {
   report_current_position();
 
   G29_RETURN(isnan(abl.measured_z), true);
+#ifdef ENV_ALPHA4
+  cs1237.leveling_flg = 0;
+#endif
 }
 
 #endif // HAS_ABL_NOT_UBL

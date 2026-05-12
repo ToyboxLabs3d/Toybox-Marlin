@@ -22,20 +22,20 @@
 #pragma once
 
 //
-// esp32_hc_v1.5 (HC32f460kcta)
+// esp32_hc_v2.4 (HC32f460kcta)
 // 
 
 #include "env_validate.h"
 
 #if HAS_MULTI_HOTEND || E_STEPPERS > 1
-  #error "esp32_hc_v1.5 only supports one hotend and E-stepper"
+  #error "esp32_hc_v2.4 only supports one hotend and E-stepper"
 #endif
 
 #ifndef BOARD_INFO_NAME
-  #define BOARD_INFO_NAME "ESP32 HC V1.5"
+  #define BOARD_INFO_NAME "ESP32 HC V2.4"
 #endif
 #ifndef DEFAULT_MACHINE_NAME
-  #define DEFAULT_MACHINE_NAME "ESP32 HC V1.5"
+  #define DEFAULT_MACHINE_NAME "ESP32 HC V2.4"
 #endif
 
 //
@@ -88,6 +88,9 @@
 #ifndef Z_MIN_PROBE_PIN
   #define Z_MIN_PROBE_PIN                   -1 
 #endif
+
+#define Z_PROBE_CS1237                      1                     // Use CS1237 for Z probe
+#define CS1237_THRESHOLD                    40                  // CS1237 trigger threshold in μV 
 //
 // Filament Runout Sensor
 //

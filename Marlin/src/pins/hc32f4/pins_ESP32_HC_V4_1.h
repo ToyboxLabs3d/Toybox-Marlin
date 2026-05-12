@@ -21,11 +21,15 @@
  */
 #pragma once
 
+
 //
 // ASD ESP32-HC V4.1 (HC32f460kcta)
 // Derived from XXXXX
 //
 #include "env_validate.h"
+
+
+
 
 #if HAS_MULTI_HOTEND || E_STEPPERS > 1
   #error "ASD ESP32-HC V4.0 only supports one hotend and three E-stepper"
@@ -156,11 +160,8 @@
 // Temperature Sensors
 //
 #define TEMP_0_PIN                          PA4   // HEATER1 ADC1_IN0
-#ifdef ENV_ALPHA3
-  #define TEMP_BED_PIN                        PA5   // HOT BED ADC1_IN14
-#elif defined(ENV_CHARLIE)
-  #define TEMP_BED_PIN                        PA3   // HOT BED ADC1_IN14
-#endif
+#define TEMP_BED_PIN                        PA3   // HOT BED ADC1_IN14
+
 
 //
 // Heaters / Fans
@@ -168,16 +169,12 @@
 #define HEATER_0_PIN                        PA9   // HEATER1
 #define HEATER_BED_PIN                      PB15   // HOT BED
 
-#ifdef ENV_ALPHA3
-  #define FAN0_PIN                            PA7//PC4   // FAN0
-  #define FAN1_PIN                            PB3//PA7   // FAN1
-  //#define FAN2_PIN                            PB3   // FAN1
-#elif defined(ENV_CHARLIE)
-  #define FAN0_PIN                            PA7//PC4   // FAN0
-  //#define FAN1_PIN                            PB3//PA7   // FAN1
-  //#define FAN2_PIN                            PD2   // FAN1
-  #define CONTROLLER_FAN_PIN                   PB3
-#endif
+
+#define FAN0_PIN                            PA7//PC4   // FAN0
+//#define FAN1_PIN                            PB3//PA7   // FAN1
+//#define FAN2_PIN                            PD2   // FAN1
+#define CONTROLLER_FAN_PIN                   PB3
+
 
 
 //

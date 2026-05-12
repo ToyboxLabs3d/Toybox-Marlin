@@ -1,6 +1,6 @@
 #include "../gcode.h"
 
-#ifdef ENV_ALPHA3
+#if defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
     #define BUILD_NUMBER 10
     #define VERSION_STRING "1.0.1"
 #elif defined(ENV_CHARLIE)

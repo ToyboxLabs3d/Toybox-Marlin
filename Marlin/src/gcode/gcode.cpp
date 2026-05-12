@@ -1163,6 +1163,12 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
       #endif
       case 10004: break;                                        // M10004 do nothing, handled by emergency parser         
       case 10005: break;                                        // M10005 do nothing, handled by emergency parser
+      #ifdef ENV_ALPHA4
+      case 10010: M10010(); break;   // 设置阈值
+      case 10011: M10011(); return;  // 查询当前压力值
+      case 10012: M10011(); return;  // 查询零值
+      #endif
+      
       default: parser.unknown_command_warning(); break;
     }
     break;

@@ -873,7 +873,7 @@ volatile bool Temperature::raw_temps_ready = false;
 
       // Did the temperature overshoot very far?
       #ifndef MAX_OVERSHOOT_PID_AUTOTUNE
-      #ifdef ENV_ALPHA3
+      #if defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
         #define MAX_OVERSHOOT_PID_AUTOTUNE 30
       #elif defined(ENV_CHARLIE)
         #define MAX_OVERSHOOT_PID_AUTOTUNE 40//30
