@@ -167,6 +167,12 @@ void cs1237_set_threshold(int32_t thr)
 {
     cs1237.cs_throshold = thr;
 }
+
+int32_t cs1237_get_threshold()
+{
+    return cs1237.cs_throshold;
+}
+
 int32_t cs1237_get_current_value()
 {
     cs1237.cs_data = (int32_t)(cs1237_data_read(&cs1237));

@@ -31,5 +31,6 @@ uint8_t cs1237_trigger();
 //清零，每次回零或调平时，执行一次。 (Zero out; called once each homing or leveling)
 void cs1237_set_zero(struct cs1237_dev *cs1237);
 void cs1237_set_threshold(int32_t thr);
+int32_t cs1237_get_threshold();
 int32_t cs1237_get_current_value();
 void calc_cs1237_trigger_state();

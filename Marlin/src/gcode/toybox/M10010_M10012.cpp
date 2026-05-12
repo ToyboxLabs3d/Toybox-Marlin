@@ -9,6 +9,8 @@ void GcodeSuite::M10010()  //set threshold
     if (parser.seenval('S')) {
         const int16_t x = parser.value_int();
         cs1237_set_threshold((int32_t)x);
+    } else {
+        SERIAL_ECHOLNPGM("cs1237 current threshold: ", cs1237_get_threshold());
     }
 }
 //e.g: "M10011\n"
