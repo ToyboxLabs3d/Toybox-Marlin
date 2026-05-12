@@ -23,12 +23,12 @@ uint8_t cs1237_drdy_read(void);
 int cs1237_sck_write(uint8_t state);
 void cs1237_func_init(void);
 void cs1237_config_init();
-//cs1237触发状态
-//根据configuration.h设置的Z_MIN_PROBE_ENDSTOP_HIT_STATE
-//如果Z_MIN_PROBE_ENDSTOP_HIT_STATE为HIGH时，返回1为触发，发回0为未触发；
-//如果Z_MIN_PROBE_ENDSTOP_HIT_STATE为LOW时，返回0为触发，发回1为未触发；
+//cs1237触发状态 (cs1237 trigger state)
+//根据configuration.h设置的Z_MIN_PROBE_ENDSTOP_HIT_STATE (Based on Z_MIN_PROBE_ENDSTOP_HIT_STATE set in configuration.h)
+//如果Z_MIN_PROBE_ENDSTOP_HIT_STATE为HIGH时，返回1为触发，发回0为未触发； (When HIGH: returns 1 = triggered, 0 = not triggered)
+//如果Z_MIN_PROBE_ENDSTOP_HIT_STATE为LOW时，返回0为触发，发回1为未触发； (When LOW: returns 0 = triggered, 1 = not triggered)
 uint8_t cs1237_trigger();
-//清零，每次回零或调平时，执行一次。
+//清零，每次回零或调平时，执行一次。 (Zero out; called once each homing or leveling)
 void cs1237_set_zero(struct cs1237_dev *cs1237);
 void cs1237_set_threshold(int32_t thr);
 int32_t cs1237_get_current_value();

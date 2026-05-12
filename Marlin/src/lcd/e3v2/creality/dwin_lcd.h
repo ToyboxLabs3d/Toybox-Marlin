@@ -26,7 +26,7 @@
  * @author   LEO / Creality3D
  * @date     2019/07/18
  * @version  2.0.1
- * @brief    迪文屏控制操作函数
+ * @brief    迪文屏控制操作函数 (DWIN screen control operation functions)
  ********************************************************************************/
 
 #include "../common/dwin_api.h"

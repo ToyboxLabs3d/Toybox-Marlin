@@ -6,7 +6,7 @@
 #define CS1237_RST_PLUSE_US         20000//12000    
 
 /*********************************************************************************************************************
- *                                                 CS1237 驱动
+ *                                                 CS1237 驱动 (CS1237 driver)
 *********************************************************************************************************************/
 
 static void cs1237_write_bit(struct cs1237_dev *cs1237, uint8_t bit) {
@@ -25,11 +25,11 @@ static void cs1237_build_data(struct cs1237_dev *cs1237) {
 }
 
 /************************************************************************
- *  0x5c    //REF输出关闭，输出40hz     PGA=128(有效分辨率为20bit)  通道A  *
- *  0x4c    //REF输出关闭，输出10hz     PGA=128(有效分辨率为20bit)  通道A  *
- *  0x1c    //REF输出开启，输出40hz     PGA=128(有效分辨率为20bit)  通道A  *
- *  0x2c    //REF输出开启，输出640hz    PGA=128(有效分辨率为20bit)  通道A  *
- *  0x3c    //REF输出开启，输出1280hz   PGA=128(有效分辨率为20bit)  通道A  *
+ *  0x5c    //REF输出关闭，输出40hz     PGA=128(有效分辨率为20bit)  通道A  *  (REF off, 40Hz output, PGA=128 [effective 20-bit], channel A)
+ *  0x4c    //REF输出关闭，输出10hz     PGA=128(有效分辨率为20bit)  通道A  *  (REF off, 10Hz output, PGA=128 [effective 20-bit], channel A)
+ *  0x1c    //REF输出开启，输出40hz     PGA=128(有效分辨率为20bit)  通道A  *  (REF on, 40Hz output, PGA=128 [effective 20-bit], channel A)
+ *  0x2c    //REF输出开启，输出640hz    PGA=128(有效分辨率为20bit)  通道A  *  (REF on, 640Hz output, PGA=128 [effective 20-bit], channel A)
+ *  0x3c    //REF输出开启，输出1280hz   PGA=128(有效分辨率为20bit)  通道A  *  (REF on, 1280Hz output, PGA=128 [effective 20-bit], channel A)
 *************************************************************************/
 int cs1237_write_config(struct cs1237_dev *cs1237) {
 
@@ -42,7 +42,7 @@ int cs1237_write_config(struct cs1237_dev *cs1237) {
         // time out..
     }
 
-    //29个CLK脉冲
+    //29个CLK脉冲 (29 CLK pulses)
     for (int i=0; i<29; i++) {
         cs1237->cs1237_sck_write(1);
         cs1237->cs1237_delay_us(CS1237_MINI_PLUSE_US);
@@ -50,7 +50,7 @@ int cs1237_write_config(struct cs1237_dev *cs1237) {
         cs1237->cs1237_delay_us(CS1237_MINI_PLUSE_US);
     }
 
-    //第30~36个脉冲，写配置寄存器
+    //第30~36个脉冲，写配置寄存器 (Pulses 30-36, write configuration register)
     cs1237->cs1237_drdy_mode_set(CS1237_DOUT_OUTPUT);
     cs1237_write_bit(cs1237, 1);
     cs1237_write_bit(cs1237, 1);
@@ -65,7 +65,7 @@ int cs1237_write_config(struct cs1237_dev *cs1237) {
     cs1237->cs1237_sck_write(0);
     cs1237->cs1237_delay_us(CS1237_MINI_PLUSE_US);
 
-    //第38~45个脉冲，写8位数据
+    //第38~45个脉冲，写８位数据 (Pulses 38-45, write 8 bits of data)
 	for(i=0; i < 8; i++)
 	{
 		cs1237->cs1237_sck_write(1);
@@ -82,7 +82,7 @@ int cs1237_write_config(struct cs1237_dev *cs1237) {
 		cs1237->cs1237_delay_us(CS1237_MINI_PLUSE_US);	
 	}
 
-    //第46个脉冲结束，并释放引脚
+    //第46个脉冲结束，并释放引脚 (End of pulse 46; release the pin)
     cs1237->cs1237_sck_write(1);
     cs1237->cs1237_delay_us(CS1237_MINI_PLUSE_US);
     cs1237->cs1237_sck_write(0);
@@ -105,7 +105,7 @@ uint8_t cs1237_read_config(struct cs1237_dev *cs1237) {
         // time out..
     }
 
-    //29个CLK脉冲
+    //29个CLK脉冲 (29 CLK pulses)
     for (int i=0; i<29; i++) {
         cs1237->cs1237_sck_write(1);
         cs1237->cs1237_delay_us(CS1237_MINI_PLUSE_US);
@@ -113,7 +113,7 @@ uint8_t cs1237_read_config(struct cs1237_dev *cs1237) {
         cs1237->cs1237_delay_us(CS1237_MINI_PLUSE_US);
     }
 
-    //第30~36个脉冲，写配置寄存器
+    //第30~36个脉冲，写配置寄存器 (Pulses 30-36, write configuration register)
     cs1237->cs1237_drdy_mode_set(CS1237_DOUT_OUTPUT);
     cs1237_write_bit(cs1237, 1);
     cs1237_write_bit(cs1237, 0);
@@ -160,7 +160,7 @@ uint32_t cs1237_data_read(struct cs1237_dev *cs1237) {
 
     while(cs1237->cs1237_drdy_read() == 1) {}
 
-    // 获取24位有效转换
+    // 获取24位有效转换 (Read 24-bit valid conversion)
     for (int i=0; i<24; i++) {
         cs1237->cs1237_sck_write(1);
         cs1237->cs1237_delay_us(CS1237_MINI_PLUSE_US);
@@ -171,7 +171,7 @@ uint32_t cs1237_data_read(struct cs1237_dev *cs1237) {
         cs1237->cs1237_delay_us(CS1237_MINI_PLUSE_US);
     }
 
-    // 第25~27个脉冲
+    // 第25~27个脉冲 (Pulses 25-27)
     for(i=0; i<3; i++) {
         cs1237->cs1237_sck_write(1);
         cs1237->cs1237_delay_us(CS1237_MINI_PLUSE_US);

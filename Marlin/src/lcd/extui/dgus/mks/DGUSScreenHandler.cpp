@@ -535,7 +535,7 @@ void DGUSScreenHandlerMKS::meshLevel(DGUS_VP_Variable &var, void *val_ptr) {
             dgus.writeVariable(VP_AutoLevel_1_Dis, level_buf_ch1, 32, true);
           }
         }
-        else if (mesh_point_count > 1) {                              // 倒数第二个点
+        else if (mesh_point_count > 1) {                              // 倒数第二个点 (Second-to-last point)
           queue.enqueue_now(F("G29S2"));
           mesh_point_count--;
           if (mks_language_index == MKS_English) {

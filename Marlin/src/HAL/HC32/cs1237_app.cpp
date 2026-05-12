@@ -132,10 +132,10 @@ float cs1237_data_deal(int32_t input_data)
     return output_data_f;
 }
 
-// 执行清零的动作
+// 执行清零的动作 (Perform the zeroing action)
 void cs1237_set_zero(struct cs1237_dev *cs1237) {
 
-    // 清零
+    // 清零 (Zero out)
     int32_t cs1237_read_zero=0;
     int32_t temp;
     int32_t data_buf[ZERO_TIMES];
@@ -155,12 +155,12 @@ void cs1237_set_zero(struct cs1237_dev *cs1237) {
         cs1237_read_zero += data_buf[j] / ZERO_TIMES;
     }
     
-    while(cs1237_read_zero == 0) // 正常数值不应该为0
+    while(cs1237_read_zero == 0) // 正常数值不应该为0 (Normal value should not be 0)
     {
        cs1237_read_zero =  cs1237_data_read(cs1237);
     }
 
-    cs1237->cs_zero_val = (int32_t)(cs1237_data_deal(cs1237_read_zero) * 1000000);  // μV  微伏
+    cs1237->cs_zero_val = (int32_t)(cs1237_data_deal(cs1237_read_zero) * 1000000);  // μV  微伏 (microvolts)
 }
 
 void cs1237_set_threshold(int32_t thr)
@@ -170,7 +170,7 @@ void cs1237_set_threshold(int32_t thr)
 int32_t cs1237_get_current_value()
 {
     cs1237.cs_data = (int32_t)(cs1237_data_read(&cs1237));
-    cs1237.cs_deal_val = (int32_t)(cs1237_data_deal(cs1237.cs_data)*1000000); // μV   微伏
+    cs1237.cs_deal_val = (int32_t)(cs1237_data_deal(cs1237.cs_data)*1000000); // μV   微伏 (microvolts)
 
     return cs1237.cs_deal_val;
 }
@@ -197,22 +197,22 @@ void cs1237_config_init()
   cs1237_set_zero(&cs1237);
 }
 
-//获取触发状态
-//根据configuration.h设置的Z_MIN_PROBE_ENDSTOP_HIT_STATE
-//如果Z_MIN_PROBE_ENDSTOP_HIT_STATE为HIGH时，返回1为触发，发回0为未触发；
-//如果Z_MIN_PROBE_ENDSTOP_HIT_STATE为LOW时，返回0为触发，发回1为未触发；
+//获取触发状态 (Get trigger state)
+//根据configuration.h设置的Z_MIN_PROBE_ENDSTOP_HIT_STATE (Based on Z_MIN_PROBE_ENDSTOP_HIT_STATE set in configuration.h)
+//如果Z_MIN_PROBE_ENDSTOP_HIT_STATE为HIGH时，返回1为触发，发回0为未触发； (When HIGH: returns 1 = triggered, 0 = not triggered)
+//如果Z_MIN_PROBE_ENDSTOP_HIT_STATE为LOW时，返回0为触发，发回1为未触发； (When LOW: returns 0 = triggered, 1 = not triggered)
 uint8_t cs1237_trigger()
 {
     return cs1237.cs_trigger_state;
 }
 
-//根据触发阈值，计算当前压力值是否达到触发条件。
-//此函数会根据阈值，计算得到cs1237.cs_trigger_state的状态值
-//此函数在idle()调用。
+//根据触发阈值，计算当前压力值是否达到触发条件。 (Compare current pressure value against trigger threshold)
+//此函数会根据阈值，计算得到cs1237.cs_trigger_state的状态值 (This function updates cs1237.cs_trigger_state based on the threshold)
+//此函数在idle()调用。 (Called from idle())
 void calc_cs1237_trigger_state()
 {
     cs1237.cs_data = (int32_t)(cs1237_data_read(&cs1237));
-    cs1237.cs_deal_val = (int32_t)(cs1237_data_deal(cs1237.cs_data)*1000000); //  μV   微伏
+    cs1237.cs_deal_val = (int32_t)(cs1237_data_deal(cs1237.cs_data)*1000000); //  μV   微伏 (microvolts)
 
     if(fabs(cs1237.cs_deal_val) <20) return;
 
@@ -228,15 +228,15 @@ void calc_cs1237_trigger_state()
         
     if(cs1237.cs_current_val >= cs1237.cs_throshold) {
         #if Z_MIN_PROBE_ENDSTOP_HIT_STATE == LOW
-            cs1237.cs_trigger_state = 0;   // 相当于低电平触发
+            cs1237.cs_trigger_state = 0;   // 相当于低电平触发 (Equivalent to active-low trigger)
         #else
-            cs1237.cs_trigger_state = 1;   // 相当于高电平触发 
+            cs1237.cs_trigger_state = 1;   // 相当于高电平触发 (Equivalent to active-high trigger)
         #endif
     }else {
         #if Z_MIN_PROBE_ENDSTOP_HIT_STATE == LOW
-            cs1237.cs_trigger_state = 1;   // 相当于低电平未触发
+            cs1237.cs_trigger_state = 1;   // 相当于低电平未触发 (Equivalent to active-low not triggered)
         #else
-            cs1237.cs_trigger_state = 0;   // 相当于高电平未触发 
+            cs1237.cs_trigger_state = 0;   // 相当于高电平未触发 (Equivalent to active-high not triggered)
         #endif
     }
        

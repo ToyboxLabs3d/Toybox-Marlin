@@ -5,15 +5,15 @@
 
 void dwt_init(void)
 {
-    // 使能DWT功能（通过DEMCR寄存器）
+    // 使能DWT功能（通过DEMCR寄存器）(Enable DWT functionality via DEMCR register)
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-    // 清零CYCCNT计数器
+    // 清零CYCCNT计数器 (Clear CYCCNT counter)
     DWT->CYCCNT = 0;    
-    // 使能CYCCNT计数器
+    // 使能CYCCNT计数器 (Enable CYCCNT counter)
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 }
 
-// 微秒级延时
+// 微秒级延时 (Microsecond-level delay)
 void dwt_delay_us(uint32_t us)
 {
     uint32_t start = DWT->CYCCNT;
@@ -22,16 +22,16 @@ void dwt_delay_us(uint32_t us)
     while ((DWT->CYCCNT - start) < cycles);
 }
 
-// 毫秒级延时
+// 毫秒级延时 (Millisecond-level delay)
 void dwt_delay_ms(uint32_t ms)
 {
     dwt_delay_us(ms * 1000);
 }
 
-// 获取纳秒级时间戳（示例，精度取决于系统时钟）
+// 获取纳秒级时间戳（示例，精度取决于系统时钟）(Get nanosecond-level timestamp; example, precision depends on system clock)
 uint32_t dwt_ns_tick_get(void)
 {
-    // 假设系统时钟为200MHz，每个周期约5ns
+    // 假设系统时钟为200MHz，每个周期约5ns (Assumes system clock is 200MHz, ~5ns per cycle)
     return ((uint32_t)((DWT->CYCCNT) / 200) * 1000);
 }
 
