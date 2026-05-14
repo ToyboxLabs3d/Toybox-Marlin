@@ -2671,6 +2671,8 @@
 
 // The ASCII buffer for serial input
 #define MAX_CMD_SIZE 96
+// WARNING (Alex Toybox): The ESP32 firmware assumes this is a certain size. 
+// Making this to small will probably cause a bunch of resends or other serial issues.
 #define BUFSIZE 11
 
 // Transmission to Host Buffer Size
