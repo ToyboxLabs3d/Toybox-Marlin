@@ -1723,8 +1723,10 @@
 
 // Most probes should stay away from the edges of the bed, but
 // with NOZZLE_AS_PROBE this can be negative for a wider probing area.
-#if defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
-  #define PROBING_MARGIN 10
+#ifdef ENV_ALPHA3
+#define PROBING_MARGIN 10
+#elif defined(ENV_ALPHA4)
+#define PROBING_MARGIN 0
 #elif defined(ENV_CHARLIE)
   #define PROBING_MARGIN 20
 #endif
@@ -2021,7 +2023,13 @@
 // Travel limits (linear=mm, rotational=°) after homing, corresponding to endstop positions.
 #define X_MIN_POS 0
 #define Y_MIN_POS 0
-#define Z_MIN_POS 0
+
+#ifdef ENV_ALPHA4
+  #define Z_MIN_POS -5
+#else
+  #define Z_MIN_POS 0
+#endif
+
 #define X_MAX_POS X_BED_SIZE
 #define Y_MAX_POS Y_BED_SIZE
 
@@ -2302,9 +2310,13 @@
    */
   #define ENABLE_LEVELING_FADE_HEIGHT
   #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
-     // Toybox Alex: This shouldn't be too low. Setting it too low will cause the nozzle
-     // to grind against the print.
-    #define DEFAULT_LEVELING_FADE_HEIGHT 15.0
+    // Toybox Alex: This shouldn't be to low. Setting it to low will cause the nozzle
+    // to grind against the print.
+    #ifdef ENV_ALPHA4
+      #define DEFAULT_LEVELING_FADE_HEIGHT 25.0
+    #else
+      #define DEFAULT_LEVELING_FADE_HEIGHT 15.0
+    #endif
   #endif
 
   /**

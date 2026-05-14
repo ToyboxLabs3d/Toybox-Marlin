@@ -70,10 +70,8 @@
 #define DEBUG_OUT ENABLED(DEBUG_LEVELING_FEATURE)
 #include "../../core/debug_out.h"
 
-#ifdef ENV_ALPHA4
 #include "../../HAL/HC32/cs1237_app.h"
 #include "../../HAL/HC32/cs1237.h"
-#endif
 
 #if ENABLED(QUICK_HOME)
 
@@ -691,9 +689,8 @@ cleanup:
   report_current_position();
 
   TERN_(FULL_REPORT_TO_HOST_FEATURE, set_and_report_grblstate(old_grblstate));
-#ifdef ENV_ALPHA4
+
   cs1237.homing_flg = 0;
-#endif
 
   #if ENABLED(TOYBOX_FAST_CMDS)
     if(stop_running_move){
