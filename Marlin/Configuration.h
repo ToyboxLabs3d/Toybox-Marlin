@@ -730,9 +730,9 @@
       #define DEFAULT_Ki 5.530
       #define DEFAULT_Kd 35.961
 	#else
-        #define DEFAULT_Kp  22.20
-        #define DEFAULT_Ki   1.08
-        #define DEFAULT_Kd 114.00	
+        #define DEFAULT_Kp  15.33
+        #define DEFAULT_Ki   2.99
+        #define DEFAULT_Kd  19.63	
 	#endif
   #endif
 #else
@@ -1365,7 +1365,7 @@
   #define DEFAULT_MAX_ACCELERATION      { 3000, 3000, 1000, 5000 }
  // #define DEFAULT_MAX_ACCELERATION      { 10000, 10000, 1000, 5000 }
 #elif defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
-  #define DEFAULT_MAX_ACCELERATION      { 5000, 5000, 100, 5000 }
+  #define DEFAULT_MAX_ACCELERATION      { 5000, 5000, 1000, 3000 }
 #else 
   #define DEFAULT_MAX_ACCELERATION      { 3000, 3000, 100, 10000 }
 #endif
@@ -1736,7 +1736,7 @@
 
 // X and Y axis travel speed between probes.
 // Leave undefined to use the average of the current XY homing feedrate.
-#define XY_PROBE_FEEDRATE    (50*60) // (mm/min)
+#define XY_PROBE_FEEDRATE    (60*60) // (mm/min)
 
 // Feedrate for the first approach when double-probing (MULTIPLE_PROBING == 2)
 #define Z_PROBE_FEEDRATE_FAST  (10*60) // (mm/min)
@@ -2308,7 +2308,7 @@
    * at which point movement will be level to the machine's XY plane.
    * The height can be set with M420 Z<height>
    */
-  #define ENABLE_LEVELING_FADE_HEIGHT
+  // #define ENABLE_LEVELING_FADE_HEIGHT
   #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
     // Toybox Alex: This shouldn't be to low. Setting it to low will cause the nozzle
     // to grind against the print.
@@ -2325,7 +2325,7 @@
    * contours of the bed more closely than edge-to-edge straight moves.
    */
   #define SEGMENT_LEVELED_MOVES
-  #define LEVELED_SEGMENT_LENGTH 5.0 // (mm) Length of all segments (except the last one)
+  #define LEVELED_SEGMENT_LENGTH 5 // (mm) Length of all segments (except the last one)
 
   /**
    * Enable the G26 Mesh Validation Pattern tool.

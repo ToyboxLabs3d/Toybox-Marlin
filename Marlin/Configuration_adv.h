@@ -2376,7 +2376,7 @@
     #if ENABLED(DISTINCT_E_FACTORS)
     #define ADVANCE_K { 0.03 }    // (mm) Compression length per 1mm/s extruder speed, per extruder
   #else
-    #define ADVANCE_K 0.03        // (mm) Compression length applying to all extruders
+    #define ADVANCE_K 0.018        // (mm) Compression length applying to all extruders
   #endif
 #endif
 
