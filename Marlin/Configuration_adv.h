@@ -2365,20 +2365,25 @@
 #define LIN_ADVANCE
 
 #if ENABLED(LIN_ADVANCE)
-#ifdef ENV_CHARLIE
-
-  #if ENABLED(DISTINCT_E_FACTORS)
-    #define ADVANCE_K { 0.03 }    // (mm) Compression length per 1mm/s extruder speed, per extruder
-  #else
-    #define ADVANCE_K 0.03        // (mm) Compression length applying to all extruders
-  #endif
+  #ifdef ENV_CHARLIE
+    #if ENABLED(DISTINCT_E_FACTORS)
+      #define ADVANCE_K { 0.03 }    // (mm) Compression length per 1mm/s extruder speed, per extruder
+    #else
+      #define ADVANCE_K 0.03        // (mm) Compression length applying to all extruders
+    #endif
+  #elif defined(ENV_ALPHA4)
+    #if ENABLED(DISTINCT_E_FACTORS)
+      #define ADVANCE_K { 0.03 }
+    #else
+      #define ADVANCE_K 0.02
+    #endif  
   #else 
     #if ENABLED(DISTINCT_E_FACTORS)
-    #define ADVANCE_K { 0.03 }    // (mm) Compression length per 1mm/s extruder speed, per extruder
-  #else
-    #define ADVANCE_K 0.018        // (mm) Compression length applying to all extruders
+      #define ADVANCE_K { 0.03 }    // (mm) Compression length per 1mm/s extruder speed, per extruder
+    #else
+      #define ADVANCE_K 0.03        // (mm) Compression length applying to all extruders
+    #endif
   #endif
-#endif
 
   //#define ADVANCE_K_EXTRA       // Add a second linear advance constant, configurable with M900 L.
   //#define LA_DEBUG              // Print debug information to serial during operation. Disable for production use.

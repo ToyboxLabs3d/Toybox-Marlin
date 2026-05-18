@@ -729,11 +729,20 @@
       #define DEFAULT_Kp 28.205
       #define DEFAULT_Ki 5.530
       #define DEFAULT_Kd 35.961
-	#else
-        #define DEFAULT_Kp  15.33
-        #define DEFAULT_Ki   2.99
-        #define DEFAULT_Kd  19.63	
-	#endif
+	  #elif defined(ENV_ALPHA3)
+      #define DEFAULT_Kp  22.20
+      #define DEFAULT_Ki   1.08
+      #define DEFAULT_Kd 114.00
+    #elif defined(ENV_ALPHA4)
+      #define DEFAULT_Kp  15.33
+      #define DEFAULT_Ki   2.99
+      #define DEFAULT_Kd  19.63
+	  #else
+      // defaults
+      #define DEFAULT_Kp  22.20
+      #define DEFAULT_Ki   1.08
+      #define DEFAULT_Kd 114.00	
+	  #endif
   #endif
 #else
   #define BANG_MAX 255    // Limit hotend current while in bang-bang mode; 255=full current
@@ -1364,7 +1373,9 @@
 #ifdef ENV_CHARLIE
   #define DEFAULT_MAX_ACCELERATION      { 3000, 3000, 1000, 5000 }
  // #define DEFAULT_MAX_ACCELERATION      { 10000, 10000, 1000, 5000 }
-#elif defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
+#elif defined(ENV_ALPHA3)
+  #define DEFAULT_MAX_ACCELERATION      { 5000, 5000, 1000, 3000 }
+#elif defined(ENV_ALPHA4)
   #define DEFAULT_MAX_ACCELERATION      { 5000, 5000, 1000, 3000 }
 #else 
   #define DEFAULT_MAX_ACCELERATION      { 3000, 3000, 100, 10000 }
@@ -1732,7 +1743,7 @@
 #endif
 
 
-#ifdef ENV_ALPHA4
+#ifdef ENV_ALPHA4 //ALPHA3 does not require a probe
 
 // X and Y axis travel speed between probes.
 // Leave undefined to use the average of the current XY homing feedrate.
@@ -2308,16 +2319,20 @@
    * at which point movement will be level to the machine's XY plane.
    * The height can be set with M420 Z<height>
    */
-  // #define ENABLE_LEVELING_FADE_HEIGHT
+  #ifndef ENV_ALPHA4
+    #define ENABLE_LEVELING_FADE_HEIGHT
+  #endif
+     
+  // Toybox Alex: This shouldn't be to low. Setting it to low will cause the nozzle
+  // to grind against the print.
+
   #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
-    // Toybox Alex: This shouldn't be to low. Setting it to low will cause the nozzle
-    // to grind against the print.
     #ifdef ENV_ALPHA4
       #define DEFAULT_LEVELING_FADE_HEIGHT 25.0
-    #else
+    #else        
       #define DEFAULT_LEVELING_FADE_HEIGHT 15.0
-    #endif
-  #endif
+    #endif  
+  #endif  
 
   /**
    * For Cartesian machines, instead of dividing moves on mesh boundaries,
