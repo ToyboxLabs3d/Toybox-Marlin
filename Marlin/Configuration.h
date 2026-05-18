@@ -1371,8 +1371,7 @@
  *                                      X, Y, Z [, I [, J [, K...]]], E0 [, E1[, E2...]]
  */
 #ifdef ENV_CHARLIE
-  #define DEFAULT_MAX_ACCELERATION      { 3000, 3000, 1000, 5000 }
- // #define DEFAULT_MAX_ACCELERATION      { 10000, 10000, 1000, 5000 }
+  #define DEFAULT_MAX_ACCELERATION      { 5000, 5000, 100, 5000 }
 #elif defined(ENV_ALPHA3)
   #define DEFAULT_MAX_ACCELERATION      { 5000, 5000, 1000, 3000 }
 #elif defined(ENV_ALPHA4)
@@ -1742,8 +1741,19 @@
   #define PROBING_MARGIN 20
 #endif
 
+#ifdef ENV_CHARLIE
 
-#ifdef ENV_ALPHA4 //ALPHA3 does not require a probe
+// X and Y axis travel speed between probes.
+// Leave undefined to use the average of the current XY homing feedrate.
+#define XY_PROBE_FEEDRATE    (50*60) // (mm/min)
+
+// Feedrate for the first approach when double-probing (MULTIPLE_PROBING == 2)
+#define Z_PROBE_FEEDRATE_FAST  (10*60) // (mm/min)
+
+// Feedrate for the "accurate" probe of each point
+#define Z_PROBE_FEEDRATE_SLOW  (5*60)  // (mm/min) 
+
+#elif defined(ENV_ALPHA4)
 
 // X and Y axis travel speed between probes.
 // Leave undefined to use the average of the current XY homing feedrate.
@@ -2340,7 +2350,7 @@
    * contours of the bed more closely than edge-to-edge straight moves.
    */
   #define SEGMENT_LEVELED_MOVES
-  #define LEVELED_SEGMENT_LENGTH 5 // (mm) Length of all segments (except the last one)
+  #define LEVELED_SEGMENT_LENGTH 5.0 // (mm) Length of all segments (except the last one)
 
   /**
    * Enable the G26 Mesh Validation Pattern tool.

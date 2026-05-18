@@ -26,6 +26,11 @@
 #include <core_hooks.h>
 #include <drivers/panic/panic.h>
 
+
+extern "C" void __attribute__((constructor)) _enable_fpu() {
+    SCB->CPACR |= 0x00F00000;   // 直接使能 FPU
+}
+
 //
 // Emergency Parser
 //
@@ -55,6 +60,3 @@ extern "C" void core_hook_usart_rx_irq(uint8_t ch, uint8_t usart) {
 #endif // EMERGENCY_PARSER
 #endif // ARDUINO_ARCH_HC32
 
-extern "C" void __attribute__((constructor)) _enable_fpu() {
-    SCB->CPACR |= 0x00F00000;   // 直接使能 FPU
-}
