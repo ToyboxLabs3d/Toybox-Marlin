@@ -690,7 +690,9 @@ cleanup:
 
   TERN_(FULL_REPORT_TO_HOST_FEATURE, set_and_report_grblstate(old_grblstate));
 
+  #if defined(ENV_ALPHA4)
   cs1237.homing_flg = 0;
+  #endif
 
   #if ENABLED(TOYBOX_FAST_CMDS)
     if(stop_running_move){
