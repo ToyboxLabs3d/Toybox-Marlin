@@ -522,7 +522,6 @@ void __O2 Endstops::report_states() {
     print_es_state(probe_switch_activated(), F(STR_PROBE_EN));
   #endif
   #if USE_Z_MIN_PROBE
-    // This seems like it doesn't do anything.
     #if Z_PROBE_CS1237
       cs1237.endstop_report_flg = 1;
       print_es_state(PROBE_TRIGGERED(), F(STR_Z_PROBE));
