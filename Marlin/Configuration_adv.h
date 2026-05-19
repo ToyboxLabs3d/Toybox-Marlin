@@ -2406,6 +2406,11 @@
  * For example, after homing a rotational axis the Z probe might not be perpendicular to the bed.
  * Choose values the orient the bed horizontally and the Z-probe vertically.
  */
+#ifdef ENV_ALPHA4
+  #define SAFE_BED_LEVELING_START_X 5.0
+  #define SAFE_BED_LEVELING_START_Y 5.0
+  #define SAFE_BED_LEVELING_START_Z 5.0
+#endif
 //#define SAFE_BED_LEVELING_START_X 0.0
 //#define SAFE_BED_LEVELING_START_Y 0.0
 //#define SAFE_BED_LEVELING_START_Z 0.0

@@ -63,7 +63,12 @@
 #include "../../../HAL/HC32/cs1237.h"
 #include "../../../HAL/HC32/cs1237_app.h"
 #endif
-
+#ifdef ENV_ALPHA4
+struct CS1237LevelingGuard {
+  CS1237LevelingGuard()  { cs1237.leveling_flg = 1; }
+  ~CS1237LevelingGuard() { cs1237.leveling_flg = 0; }
+};
+#endif
 #if ABL_USES_GRID
   #if ENABLED(PROBE_Y_FIRST)
     #define PR_OUTER_VAR  abl.meshCount.x
@@ -234,6 +239,9 @@ public:
  *     There's no extra effect if you have a fixed Z probe.
  */
 G29_TYPE GcodeSuite::G29() {
+  #ifdef ENV_ALPHA4
+    CS1237LevelingGuard cs1237_guard;   // 生命期覆盖整个函数
+  #endif
 
   DEBUG_SECTION(log_G29, "G29", DEBUGGING(LEVELING));
 
@@ -289,10 +297,7 @@ G29_TYPE GcodeSuite::G29() {
    * On the initial G29 fetch command parameters.
    */
   if (!g29_in_progress) {
-#ifdef ENV_ALPHA4
-    cs1237.leveling_flg = 1;
-    cs1237_set_zero(&cs1237);
-#endif
+
     probe.use_probing_tool();
 
     #ifdef EVENT_GCODE_BEFORE_G29
@@ -508,7 +513,9 @@ G29_TYPE GcodeSuite::G29() {
 
       do_blocking_move_to(safe_position);
     #endif // HAS_SAFE_BED_LEVELING
-
+    #ifdef ENV_ALPHA4
+        cs1237_set_zero(&cs1237);
+    #endif
     // Disable auto bed leveling during G29.
     // Be formal so G29 can be done successively without G28.
     if (!no_action) set_bed_leveling_enabled(false);
@@ -1051,9 +1058,6 @@ G29_TYPE GcodeSuite::G29() {
   report_current_position();
 
   G29_RETURN(isnan(abl.measured_z), true);
-#ifdef ENV_ALPHA4
-  cs1237.leveling_flg = 0;
-#endif
 }
 
 #endif // HAS_ABL_NOT_UBL
