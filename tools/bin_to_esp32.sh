@@ -45,4 +45,4 @@ echo "copying ${MARLIN_BIN} to ${DEST_DIR}"
 cp "${MARLIN_BIN}" "${DEST_DIR}/marlin.bin"
 
 echo "writing ${MARLIN_BUILD} to ${DEST_DIR}/marlin_ver"
-echo "${MARLIN_BUILD}" > "${DEST_DIR}/marlin_ver"
+printf "%s" "${MARLIN_BUILD}" > "${DEST_DIR}/marlin_ver"
