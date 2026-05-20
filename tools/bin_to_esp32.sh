@@ -15,8 +15,6 @@ if [ -z "${1:-}" ]; then
     exit 1
 fi
 
-
-
 MARLIN_PIO_ENV="$1"
 echo "Marlin PIO environment: ${MARLIN_PIO_ENV}"
 
