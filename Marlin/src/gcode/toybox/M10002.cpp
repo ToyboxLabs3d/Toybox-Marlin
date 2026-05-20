@@ -15,5 +15,5 @@
 #endif
 
 void GcodeSuite::M10002(){
-  SERIAL_ECHO_MSG("Toybox-marlin BUILD: ", BUILD_NUMBER, " VERSION: ", VERSION_STRING);
+  SERIAL_ECHO_MSG("Toybox-marlin BUILD: " STRINGIFY(BUILD_NUMBER) ", VERSION: " VERSION_STRING);
 }
