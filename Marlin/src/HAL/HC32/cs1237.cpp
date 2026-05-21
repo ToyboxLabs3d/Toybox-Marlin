@@ -1,8 +1,9 @@
 #ifdef ENV_ALPHA4
 
 #include "cs1237.h"
+#include "../../core/serial.h"
 
-#define CS1237_MINI_PLUSE_US        91//40      
+#define CS1237_MINI_PLUSE_US        40 //91//40      
 #define CS1237_RST_PLUSE_US         20000//12000    
 
 /*********************************************************************************************************************
@@ -24,6 +25,18 @@ static void cs1237_build_data(struct cs1237_dev *cs1237) {
     cs1237->cs1237_sck_write(0);
 }
 
+static bool cs1237_wait_drdy_ready(struct cs1237_dev *cs1237, uint32_t timeout_ms) {
+    const uint32_t start_ms = millis();
+
+    while (cs1237->cs1237_drdy_read() == 1) {
+        if ((millis() - start_ms) >= timeout_ms) {
+            SERIAL_ECHOLN("Error: CS1237 DRDY not ready within timeout (", timeout_ms, " ms)  delta ms: ", millis() - start_ms);
+            return false; // Timeout
+        }
+    }
+    return true; // Ready
+}
+
 /************************************************************************
  *  0x5c    //REF输出关闭，输出40hz     PGA=128(有效分辨率为20bit)  通道A  *  (REF off, 40Hz output, PGA=128 [effective 20-bit], channel A)
  *  0x4c    //REF输出关闭，输出10hz     PGA=128(有效分辨率为20bit)  通道A  *  (REF off, 10Hz output, PGA=128 [effective 20-bit], channel A)
@@ -38,8 +51,10 @@ int cs1237_write_config(struct cs1237_dev *cs1237) {
 
     cs1237_build_data(cs1237);
 
-    while(cs1237->cs1237_drdy_read() == 1) {
-        // time out..
+    bool success = cs1237_wait_drdy_ready(cs1237, 1000); // 等待DRDY准备好，超时时间1000ms (Wait for DRDY to be ready, timeout 1000ms)
+    if(!success) {
+        SERIAL_ECHOLNPGM("Error: CS1237 DRDY not ready within timeout during config write");
+        return -1; // DRDY not ready within timeout
     }
 
     //29个CLK脉冲 (29 CLK pulses)
@@ -101,8 +116,10 @@ uint8_t cs1237_read_config(struct cs1237_dev *cs1237) {
 
     cs1237_build_data(cs1237);
 
-    while(cs1237->cs1237_drdy_read() == 1) {
-        // time out..
+    bool success = cs1237_wait_drdy_ready(cs1237, 1000); // 等待DRDY准备好，超时时间1000ms (Wait for DRDY to be ready, timeout 1000ms)
+    if(!success) {
+        SERIAL_ECHOLNPGM("Error: CS1237 DRDY not ready within timeout during config read");
+        return -1; // DRDY not ready within timeout
     }
 
     //29个CLK脉冲 (29 CLK pulses)
@@ -158,7 +175,11 @@ uint32_t cs1237_data_read(struct cs1237_dev *cs1237) {
 
     cs1237_build_data(cs1237);
 
-    while(cs1237->cs1237_drdy_read() == 1) {}
+    bool success = cs1237_wait_drdy_ready(cs1237, 1000); // 等待DRDY准备好，超时时间1000ms (Wait for DRDY to be ready, timeout 1000ms)
+    if(!success) {
+        SERIAL_ECHOLNPGM("Error: CS1237 DRDY not ready within timeout during data read");
+        return -1; // DRDY not ready within timeout
+    }
 
     // 获取24位有效转换 (Read 24-bit valid conversion)
     for (int i=0; i<24; i++) {
