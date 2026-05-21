@@ -64,7 +64,8 @@
 #include "../../../HAL/HC32/cs1237_app.h"
 #endif
 #ifdef ENV_ALPHA4
-struct CS1237LevelingGuard {
+class CS1237LevelingGuard {
+  public:
   CS1237LevelingGuard()  { cs1237.leveling_flg = 1; }
   ~CS1237LevelingGuard() { cs1237.leveling_flg = 0; }
 };
@@ -240,7 +241,7 @@ public:
  */
 G29_TYPE GcodeSuite::G29() {
   #ifdef ENV_ALPHA4
-    CS1237LevelingGuard cs1237_guard;   // 生命期覆盖整个函数
+    CS1237LevelingGuard cs1237_guard;   // 生命期覆盖整个函数 (lifetime spans the entire function)
   #endif
 
   DEBUG_SECTION(log_G29, "G29", DEBUGGING(LEVELING));
