@@ -25,8 +25,8 @@
 #include <drivers/usart/Usart.h>
 
 // Optionally set uart IRQ priority to reduce overflow errors
-//#define UART_RX_IRQ_PRIO 1
-//#define UART_TX_IRQ_PRIO 1
+#define UART_RX_IRQ_PRIO 0
+#define UART_TX_IRQ_PRIO 1
 //#define UART_RX_DMA_IRQ_PRIO 1
 
 struct MarlinSerial : public Usart {
@@ -55,7 +55,7 @@ struct MarlinSerial : public Usart {
 
       #if defined(UART_TX_IRQ_PRIO)
         NVIC_SetPriority(c_dev()->interrupts.tx_buffer_empty.interrupt_number, UART_TX_IRQ_PRIO);
-        NVIC_SetPriority(c_dev()->interrupts.tx_complete.interrupt_number, UART_TX_IRQ_PRIO);
+        //NVIC_SetPriority(c_dev()->interrupts.tx_complete.interrupt_number, UART_TX_IRQ_PRIO);
       #endif
 
       #if defined(UART_RX_DMA_IRQ_PRIO) && ENABLED(SERIAL_DMA)
