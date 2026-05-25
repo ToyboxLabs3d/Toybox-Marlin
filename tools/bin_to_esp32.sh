@@ -21,10 +21,10 @@ echo "Marlin PIO environment: ${MARLIN_PIO_ENV}"
 
 case "$MARLIN_PIO_ENV" in
     Alpha3)
-        DEST_DIR="${ESP32_DIR}/other_data/alpha_3"
+        DEST_DIR="${ESP32_DIR}/data_common/alpha_3"
         ;;
     Alpha4)
-        DEST_DIR="${ESP32_DIR}/other_data/alpha_4"
+        DEST_DIR="${ESP32_DIR}/app1_other_data/alpha_4"
         ;;
     *)
         echo "unknown env: $MARLIN_PIO_ENV"
@@ -42,6 +42,7 @@ echo "Marlin build: ${MARLIN_BUILD}"
 
 
 echo "copying ${MARLIN_BIN} to ${DEST_DIR}"
+mkdir -p "${DEST_DIR}"
 cp "${MARLIN_BIN}" "${DEST_DIR}/marlin.bin"
 
 echo "writing ${MARLIN_BUILD} to ${DEST_DIR}/marlin_ver"
