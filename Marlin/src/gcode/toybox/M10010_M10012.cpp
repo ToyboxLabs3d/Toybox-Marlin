@@ -16,7 +16,11 @@ void GcodeSuite::M10010()  //set threshold
 //e.g: "M10011\n"
 void GcodeSuite::M10011()
 {
-    SERIAL_ECHOLNPGM("cs1237 current value: ", cs1237_get_current_value()); 
+    if(parser.seen('R')){
+        SERIAL_ECHOLNPGM("cs1237 current value: ", cs1237_get_raw_data()); 
+    }else{
+        SERIAL_ECHOLNPGM("cs1237 current value: ", cs1237_get_current_value()); 
+    }
 }
 
 void GcodeSuite::M10012()

@@ -112,10 +112,10 @@ int32_t cs1237_data_dir(int32_t input_data)
 
     if(input_data & (1 << 23)) {
         output_data = ~input_data;
-        output_data = -((output_data + 1) & 0x00FFFFE0);
+        output_data = -((output_data + 1) & 0x00FF'FFE0);
     }else {
         output_data = input_data;
-        output_data = (output_data) & 0x0FFFFFE0;
+        output_data = (output_data) & 0x0FFF'FFE0;
     }
 
     return output_data;
@@ -171,6 +171,11 @@ void cs1237_set_threshold(int32_t thr)
 int32_t cs1237_get_threshold()
 {
     return cs1237.cs_throshold;
+}
+
+uint32_t cs1237_get_raw_data()
+{
+    return cs1237_data_read(&cs1237);
 }
 
 int32_t cs1237_get_current_value()

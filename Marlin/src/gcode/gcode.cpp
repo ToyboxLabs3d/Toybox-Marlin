@@ -1165,8 +1165,8 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
       case 10005: break;                                        // M10005 do nothing, handled by emergency parser
       #ifdef ENV_ALPHA4
       case 10010: M10010(); break;   // 设置阈值 (Set threshold)
-      case 10011: M10011(); return;  // 查询当前压力值 (Query current pressure value)
-      case 10012: M10011(); return;  // 查询零值 (Query zero value)
+      case 10011: M10011(); break;  // 查询当前压力值 (Query current pressure value)
+      case 10012: M10012(); break;  // 查询零值 (Query zero value)
       #endif
       
       default: parser.unknown_command_warning(); break;

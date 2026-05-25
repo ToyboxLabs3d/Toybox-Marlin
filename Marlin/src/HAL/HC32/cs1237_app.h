@@ -34,3 +34,5 @@ void cs1237_set_threshold(int32_t thr);
 int32_t cs1237_get_threshold();
 int32_t cs1237_get_current_value();
 void calc_cs1237_trigger_state();
+uint32_t cs1237_get_raw_data();
+
