@@ -493,49 +493,55 @@ uint8_t CS1237::read_config() {
 }
 
 uint32_t CS1237::get_raw_data() {
+    const int max_tries = 3;
 
-    uint8_t i=0;
-	uint32_t data = 0x0;
+    for(int try_num=0; try_num < max_tries; try_num++) {
+        uint8_t i=0;
+        uint32_t data = 0x0;
 
-    _build_data();
+        _build_data();
 
-    bool success = _wait_drdy_ready(1000); // 等待DRDY准备好，超时时间1000ms (Wait for DRDY to be ready, timeout 1000ms)
-    if(!success) {
-        SERIAL_ECHOLNPGM("Error: CS1237 DRDY not ready within timeout during data read");
-        return -1; // DRDY not ready within timeout
-    }
-
-    // CRITICAL_SECTION_START();
-    // 获取24位有效转换 (Read 24-bit valid conversion)
-    for (int i=0; i<24; i++) {
-        sck_write(1);
-        delay_us(CS1237_MINI_PLUSE_US);
-        data <<= 1;
-        if(drdy_read() == 1){
-            data++;
+        bool success = _wait_drdy_ready(1000); // 等待DRDY准备好，超时时间1000ms (Wait for DRDY to be ready, timeout 1000ms)
+        if(!success) {
+            SERIAL_ECHOLNPGM("Error: CS1237 DRDY not ready within timeout during data read");
+            return -1; // DRDY not ready within timeout
         }
-        sck_write(0);
-        delay_us(CS1237_MINI_PLUSE_US);
+
+        // CRITICAL_SECTION_START();
+        // 获取24位有效转换 (Read 24-bit valid conversion)
+        for (int i=0; i<24; i++) {
+            sck_write(1);
+            delay_us(CS1237_MINI_PLUSE_US);
+            data <<= 1;
+            if(drdy_read() == 1){
+                data++;
+            }
+            sck_write(0);
+            delay_us(CS1237_MINI_PLUSE_US);
+        }
+
+        // 第25~27个脉冲 (Pulses 25-27)
+        for(int i=0; i<3; i++) {
+            sck_write(1);
+            delay_us(CS1237_MINI_PLUSE_US);
+            sck_write(0);
+            delay_us(CS1237_MINI_PLUSE_US);
+        }
+        // CRITICAL_SECTION_END();
+
+        drdy_mode_set(CS1237_DOUT_INTPUT);
+
+        static_assert(sizeof(data) == sizeof(unsigned int));
+        const int bit_count = __builtin_popcount(data);
+        if(bit_count > 2 && bit_count < 22) {
+            return data;
+        }
+        SERIAL_ECHOLNPGM("CS1237: invalid data read (try ", try_num+1, "/", max_tries, "): ", data, "  bit_count: ", bit_count);  
     }
-
-    // 第25~27个脉冲 (Pulses 25-27)
-    for(i=0; i<3; i++) {
-        sck_write(1);
-        delay_us(CS1237_MINI_PLUSE_US);
-        sck_write(0);
-        delay_us(CS1237_MINI_PLUSE_US);
-    }
-    // CRITICAL_SECTION_END();
-
-    drdy_mode_set(CS1237_DOUT_INTPUT);
-
-    // SERIAL_ECHOLNPGM("CS1237: raw data: ", data);
-
-    return data;
+    return (1 << 23) - 1; // max possible positive value. data is a 24 bit signed value.
 }
 
 int CS1237::power_down() {
-
     sck_write(1);
     delay_us(CS1237_RST_PLUSE_US);
     sck_write(0);
