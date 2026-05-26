@@ -72,7 +72,6 @@
 
 #ifdef ENV_ALPHA4
 #include "../../HAL/HC32/cs1237.h"
-#include "../../HAL/HC32/cs1237_app.h"
 #endif
 
 #if ENABLED(QUICK_HOME)

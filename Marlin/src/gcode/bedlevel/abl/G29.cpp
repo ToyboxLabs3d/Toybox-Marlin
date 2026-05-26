@@ -60,9 +60,9 @@
 #include "../../../core/debug_out.h"
 
 #ifdef ENV_ALPHA4
-#include "../../../HAL/HC32/cs1237.h"
-#include "../../../HAL/HC32/cs1237_app.h"
+  #include "../../../HAL/HC32/cs1237.h"
 #endif
+
 #ifdef ENV_ALPHA4
 class CS1237LevelingGuard {
   public:
@@ -70,6 +70,7 @@ class CS1237LevelingGuard {
   ~CS1237LevelingGuard() { cs1237.leveling_flg = 0; }
 };
 #endif
+
 #if ABL_USES_GRID
   #if ENABLED(PROBE_Y_FIRST)
     #define PR_OUTER_VAR  abl.meshCount.x
@@ -515,7 +516,7 @@ G29_TYPE GcodeSuite::G29() {
       do_blocking_move_to(safe_position);
     #endif // HAS_SAFE_BED_LEVELING
     #ifdef ENV_ALPHA4
-        cs1237_set_zero(&cs1237);
+        cs1237.set_zero();
     #endif
     // Disable auto bed leveling during G29.
     // Be formal so G29 can be done successively without G28.

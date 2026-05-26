@@ -271,7 +271,6 @@
 
 #ifdef ENV_ALPHA4
 #include "HAL/HC32/cs1237.h"
-#include "HAL/HC32/cs1237_app.h"
 #endif
 
 uint32_t cstick=0;
@@ -777,7 +776,7 @@ void idle(const bool no_stepper_sleep/*=false*/) {
   #endif
 #ifdef ENV_ALPHA4
   if((cs1237.homing_flg == 1)||(cs1237.leveling_flg == 1)||(cs1237.endstop_report_flg == 1)){
-    calc_cs1237_trigger_state();
+    cs1237.calc_trigger_state();
   }
 #endif
   #if ENABLED(MARLIN_DEV_MODE)
@@ -1736,7 +1735,7 @@ void setup() {
 
   #ifdef ENV_ALPHA4
   //HC_TIM6_init();
-  cs1237_func_init();
+  cs1237.func_init();
   cstick = millis();
   #endif
 }

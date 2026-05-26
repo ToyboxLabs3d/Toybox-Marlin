@@ -70,7 +70,6 @@
 
 #ifdef ENV_ALPHA4
 #include "../HAL/HC32/cs1237.h"
-#include "../HAL/HC32/cs1237_app.h"
 #endif
 Endstops endstops;
 
@@ -566,7 +565,7 @@ void Endstops::update() {
   #define _ES_HIT(A,M) A##_##M##_ENDSTOP_HIT_STATE
   #define UPDATE_LIVE_STATE(AXIS, MINMAX) SET_BIT_TO(live_state, ES_ENUM(AXIS, MINMAX), (READ_ENDSTOP(_ES_PIN(AXIS, MINMAX)) == _ES_HIT(AXIS, MINMAX)))
   #ifdef ENV_ALPHA4
-  #define UPDATE_LIVE_STATE_CS1237(AXIS, MINMAX) SET_BIT_TO(live_state, ES_ENUM(AXIS, MINMAX), (cs1237_trigger() == _ES_HIT(AXIS, MINMAX)))
+  #define UPDATE_LIVE_STATE_CS1237(AXIS, MINMAX) SET_BIT_TO(live_state, ES_ENUM(AXIS, MINMAX), (cs1237.trigger() == _ES_HIT(AXIS, MINMAX)))
   #endif
   #define COPY_LIVE_STATE(SRC_BIT, DST_BIT) SET_BIT_TO(live_state, DST_BIT, TEST(live_state, SRC_BIT))
 

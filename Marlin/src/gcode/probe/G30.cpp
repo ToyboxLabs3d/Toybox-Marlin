@@ -45,7 +45,6 @@
 #ifdef ENV_ALPHA4
 // 添加 CS1237 头文件（与 G29 一致）
 #include "../../HAL/HC32/cs1237.h"
-#include "../../HAL/HC32/cs1237_app.h"
 #endif
 /**
  * G30: Do a single Z probe at the given XY (default: current)
@@ -72,7 +71,7 @@ void GcodeSuite::G30() {
 #ifdef ENV_ALPHA4
     // ========== 加入 CS1237 初始化 ==========
     cs1237.leveling_flg = 1;
-    cs1237_set_zero(&cs1237);
+    cs1237.set_zero();
     // =======================================
 #endif
     // Disable leveling so the planner won't mess with us
