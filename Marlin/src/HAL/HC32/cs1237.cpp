@@ -30,12 +30,7 @@
 #define NANOS_PER_SEC 1'000'000'000ULL
 #define MICROS_PER_SEC 1'000'000ULL
 
-#define NUM_PREV_VALUES 5
 
-static_assert(NUM_PREV_VALUES % 2 == 1, "NUM_PREV_VALUES must be odd to have a clear median");
-
-int32_t prev_values[NUM_PREV_VALUES] = {0};
-int8_t prev_values_index = -1;
 
 
 static void st_timer_init(void) {
@@ -64,19 +59,19 @@ static int delay_ns(uint32_t ns) {
 
 int CS1237::gpio_init() {
 
-    MEM_ZERO_STRUCT(stcPortInit);
+    MEM_ZERO_STRUCT(_stcPortInit);
 
-    stcPortInit.enPinMode = Pin_Mode_Out;
-    stcPortInit.enLatch = Disable;
-    stcPortInit.enExInt = Disable;
-    stcPortInit.enInvert = Disable;
-    stcPortInit.enPullUp = Disable;
-    stcPortInit.enPinDrv = Pin_Drv_H;
-    stcPortInit.enPinOType = Pin_OType_Od;
-    stcPortInit.enPinSubFunc = Disable;
+    _stcPortInit.enPinMode = Pin_Mode_Out;
+    _stcPortInit.enLatch = Disable;
+    _stcPortInit.enExInt = Disable;
+    _stcPortInit.enInvert = Disable;
+    _stcPortInit.enPullUp = Disable;
+    _stcPortInit.enPinDrv = Pin_Drv_H;
+    _stcPortInit.enPinOType = Pin_OType_Od;
+    _stcPortInit.enPinSubFunc = Disable;
 
-    PORT_Init(CS1237_DRDY_PORT, CS1237_DRDY_PIN, &stcPortInit);
-    PORT_Init(CS1237_SCK_PORT, CS1237_SCK_PIN, &stcPortInit);
+    PORT_Init(CS1237_DRDY_PORT, CS1237_DRDY_PIN, &_stcPortInit);
+    PORT_Init(CS1237_SCK_PORT, CS1237_SCK_PIN, &_stcPortInit);
 
     return 0;
 }
@@ -84,11 +79,11 @@ int CS1237::gpio_init() {
 int CS1237::drdy_mode_set(uint8_t mode) {
 
     if(mode == CS1237_DOUT_OUTPUT) {
-        stcPortInit.enPinMode = Pin_Mode_Out;
-        PORT_Init(CS1237_DRDY_PORT, CS1237_DRDY_PIN, &stcPortInit);
+        _stcPortInit.enPinMode = Pin_Mode_Out;
+        PORT_Init(CS1237_DRDY_PORT, CS1237_DRDY_PIN, &_stcPortInit);
     }else {
-        stcPortInit.enPinMode = Pin_Mode_In;
-        PORT_Init(CS1237_DRDY_PORT, CS1237_DRDY_PIN, &stcPortInit);
+        _stcPortInit.enPinMode = Pin_Mode_In;
+        PORT_Init(CS1237_DRDY_PORT, CS1237_DRDY_PIN, &_stcPortInit);
     }    
     return 0;
 }
@@ -120,12 +115,13 @@ int CS1237::sck_write(uint8_t state) {
 }
 
 void CS1237::func_init(void) {
+    SERIAL_ECHOLNPGM("CS1237: initializing");
     gpio_init();
     st_timer_init();
     config_init();
 }
 
-int32_t CS1237::data_dir(int32_t input_data) 
+int32_t CS1237::_data_dir(int32_t input_data) 
 {
     int32_t output_data;
 
@@ -139,127 +135,156 @@ int32_t CS1237::data_dir(int32_t input_data)
 
     return output_data;
 }
-float CS1237::data_deal(int32_t input_data) 
-{
-    int32_t output_data;
-    float output_data_f;
 
-    output_data = data_dir(input_data);
-
-    output_data_f = (output_data * ((0.5 * CS1237_VREF) / CS1237_GAIN )) / CS1237_ADC_BIT; //v
-
-    return output_data_f;
+int32_t CS1237::_data_deal(int32_t input_data) {
+    int32_t output_data = _data_dir(input_data);
+    output_data = int32_t(((output_data * ((0.5 * CS1237_VREF) / CS1237_GAIN )) / CS1237_ADC_BIT)* 1'000'000); // μV  微伏 (microvolts)
+    // SERIAL_ECHOLNPGM("CS1237: deal data: ", output_data);
+    return output_data;
 }
 
 // 执行清零的动作 (Perform the zeroing action)
 void CS1237::set_zero() {
 
     // 清零 (Zero out)
-    int32_t read_zero=0;
-    int32_t temp;
-    int32_t data_buf[ZERO_TIMES];
+    // int32_t read_zero=0;
+    // int32_t temp;
+    // int32_t data_buf[ZERO_TIMES];
     
-    read_zero=0;
+    // read_zero=0;
     
-    for (uint8_t i=0; i<ZERO_TIMES;i++) {
-        temp = data_read();
-        while( temp == 0) {
-            temp = data_read();
+    // for (uint8_t i=0; i<ZERO_TIMES;i++) {
+    //     temp = get_raw_data();
+    //     while( temp == 0) {
+    //         temp = get_raw_data();
+    //     }
+    //     data_buf[i] = temp;
+    // }
+
+    // for (uint8_t j=0; j<ZERO_TIMES;j++) {
+
+    //     read_zero += data_buf[j] / ZERO_TIMES;
+    // }
+    
+    // while(read_zero == 0) // 正常数值不应该为0 (Normal value should not be 0)
+    // {
+    //    read_zero =  get_raw_data();
+    // }
+
+    // cs_zero_val = (int32_t)(_data_deal(read_zero) * 1000000);  // μV  微伏 (microvolts)
+    int32_t sum = 0;
+    int i = 0;
+    int fail_count = 0;
+    while(i < ZERO_TIMES)  {
+        int32_t value = get_current_value();
+        if(value != 0) {
+            sum += value;
+            i++;
         }
-        data_buf[i] = temp;
+        else if(++fail_count > ZERO_TIMES * 10) {
+            SERIAL_ECHOLNPGM("CS1237: failed to get enough non-zero samples for zeroing");
+            break;
+        }
     }
-
-    for (uint8_t j=0; j<ZERO_TIMES;j++) {
-
-        read_zero += data_buf[j] / ZERO_TIMES;
-    }
-    
-    while(read_zero == 0) // 正常数值不应该为0 (Normal value should not be 0)
-    {
-       read_zero =  data_read();
-    }
-
-    cs_zero_val = (int32_t)(data_deal(read_zero) * 1000000);  // μV  微伏 (microvolts)
+    cs_zero_val = (i==0) ? 0 : sum / i;
 }
 
 void CS1237::set_threshold(int32_t thr)
 {
-    cs_throshold = thr;
+    _cs_threshold = thr;
 }
 
 int32_t CS1237::get_threshold()
 {
-    return cs_throshold;
-}
-
-uint32_t CS1237::get_raw_data()
-{
-    return data_read();
+    return _cs_threshold;
 }
 
 
-static int32_t get_median_of_prev_values() {
-    int32_t to_sort[NUM_PREV_VALUES];
-    memcpy(to_sort, prev_values, sizeof(prev_values));
 
-    const int median_index = NUM_PREV_VALUES / 2;
+
+static int32_t get_median_of_prev_values(const int32_t *prev_values) {
+    int32_t buffer[CS1237_NUM_PREV_VALUES];
+    memcpy(buffer, prev_values, sizeof(buffer));
+
+    const int median_index = CS1237_NUM_PREV_VALUES / 2;
 
     // enough of an insertion sort to get the median value in place; no need to fully sort the array
     for(int sort_iter=0; sort_iter <= median_index; sort_iter++) {
-        int32_t min_value = to_sort[sort_iter];
+        int32_t min_value = buffer[sort_iter];
         int min_index = sort_iter;
-        for(int canidate_idx=sort_iter+1; canidate_idx < NUM_PREV_VALUES; canidate_idx++) {
-            if(to_sort[canidate_idx] < min_value) {
-                min_value = to_sort[canidate_idx];
+        for(int canidate_idx=sort_iter+1; canidate_idx < CS1237_NUM_PREV_VALUES; canidate_idx++) {
+            if(buffer[canidate_idx] < min_value) {
+                min_value = buffer[canidate_idx];
                 min_index = canidate_idx;
             }
         }
-        to_sort[min_index] = to_sort[sort_iter];
-        to_sort[sort_iter] = min_value;
+        buffer[min_index] = buffer[sort_iter];
+        buffer[sort_iter] = min_value;
     }    
 
-    return to_sort[median_index];
+    return buffer[median_index];
 }
 
 int32_t CS1237::get_current_value()
 {
 
-    if(prev_values_index == -1){
-        for(prev_values_index = 0; prev_values_index < NUM_PREV_VALUES-1; prev_values_index++){
-            prev_values[prev_values_index] = data_deal(data_read()) * 1000000; // μV   微伏 (microvolts)
-            // SERIAL_ECHOLNPGM("Initializing CS1237 value buffer, reading value ", prev_values_index, "/", NUM_PREV_VALUES, "with ", prev_values[prev_values_index], " μV");
+    if(_last_read_time_ms == 0 || (millis() - _last_read_time_ms) >= 100) {
+        SERIAL_ECHOLNPGM("CS1237: repopulating value buffer");
+        for(_prev_values_index = 0; _prev_values_index < CS1237_NUM_PREV_VALUES-1; _prev_values_index++){
+            _prev_values[_prev_values_index] = _data_deal(get_raw_data());
+            // SERIAL_ECHOLNPGM("CS1237: value: ", _prev_values[_prev_values_index]);
         }
+#ifdef LOG_CS1237_SAMPLE_RATE
+        _burst_start_time_ms = millis();
+        _burst_count = CS1237_NUM_PREV_VALUES-1;
+#endif
     }
+    _last_read_time_ms = millis();
+#ifdef LOG_CS1237_SAMPLE_RATE
+    if(_burst_count == 0) {
+        _burst_start_time_ms = millis();
+    }
+#endif
+    int32_t raw_data = (int32_t)(get_raw_data());
+    int32_t deal_val = _data_deal(raw_data); 
+    _prev_values[_prev_values_index] = deal_val;
+    // SERIAL_ECHOLNPGM("CS1237: value: ", _prev_values[_prev_values_index]);
 
-    cs_data = (int32_t)(data_read());
-    cs_deal_val = (int32_t)(data_deal(cs_data)*1000000); // μV   微伏 (microvolts)
-    prev_values[prev_values_index] = cs_deal_val;
+    _prev_values_index = (_prev_values_index + 1) % CS1237_NUM_PREV_VALUES;
 
-    prev_values_index = (prev_values_index + 1) % NUM_PREV_VALUES;
+#ifdef LOG_CS1237_SAMPLE_RATE
+    if(++_burst_count == 100) {
+        const float samples_per_sec = (_burst_count*1000.0) / float(millis() - _burst_start_time_ms) ;
+        SERIAL_ECHOLN("CS1237: SR: ", samples_per_sec);
+        _burst_count = 0;
+    }
+#endif
 
-    return get_median_of_prev_values();
+    int32_t median = get_median_of_prev_values(_prev_values);
+    // SERIAL_ECHOLNPGM("CS1237: median value: ", median);
+    return median;
 }
 
 void CS1237::config_init()
 {
-  uint8_t config = 0;
+    uint8_t config = 0;
 
-  power_down();
-  dwt_delay_ms(100);
-  write_config();
-  dwt_delay_ms(100);  
-
-  write_config();
-  config = read_config();
-
-  if(config != 0x3C)
-  {
+    power_down();
+    dwt_delay_ms(100);
     write_config();
-  }
- 
-  cs_trigger_state = 1;
-  set_threshold(CS1237_THRESHOLD);
-  set_zero();
+    dwt_delay_ms(100);  
+
+    write_config();
+    config = read_config();
+
+    if(config != 0x3C)
+    {
+        write_config();
+    }
+    
+    _cs_trigger_state = 1;
+    set_threshold(CS1237_THRESHOLD);
+    set_zero();
 }
 
 //获取触发状态 (Get trigger state)
@@ -268,37 +293,38 @@ void CS1237::config_init()
 //如果Z_MIN_PROBE_ENDSTOP_HIT_STATE为LOW时，返回0为触发，发回1为未触发； (When LOW: returns 0 = triggered, 1 = not triggered)
 uint8_t CS1237::trigger()
 {
-    return cs_trigger_state;
+    return _cs_trigger_state;
 }
 
 //根据触发阈值，计算当前压力值是否达到触发条件。 (Compare current pressure value against trigger threshold)
-//此函数会根据阈值，计算得到cs1237.cs_trigger_state的状态值 (This function updates cs1237.cs_trigger_state based on the threshold)
+//此函数会根据阈值，计算得到cs1237.cs_trigger_state的状态值 (This function updates cs1237._cs_trigger_state based on the threshold)
 //此函数在idle()调用。 (Called from idle())
 void CS1237::calc_trigger_state()
 {
-    cs_data = (int32_t)(data_read());
-    cs_deal_val = (int32_t)(data_deal(cs_data)*1000000); //  μV   微伏 (microvolts)
+    // int32_t raw_data = (int32_t)(get_raw_data());
+    // int32_t value = (int32_t)(_data_deal(raw_data)*1000000); //  μV   微伏 (microvolts)
 
-    if(fabs(cs_deal_val) <20) {
+    int32_t value = get_current_value();
+
+    if(fabs(value) <20) {
         return;
     }
 
-    cs_current_val = fabs((cs_deal_val - cs_zero_val)); 
+    int32_t current_val = fabs((value - cs_zero_val)); 
         
-    if(cs_current_val >= cs_throshold) {
+    if(current_val >= _cs_threshold) {
         #if Z_MIN_PROBE_ENDSTOP_HIT_STATE == LOW
-            cs_trigger_state = 0;   // 相当于低电平触发 (Equivalent to active-low trigger)
+            _cs_trigger_state = 0;   // 相当于低电平触发 (Equivalent to active-low trigger)
         #else
-            cs_trigger_state = 1;   // 相当于高电平触发 (Equivalent to active-high trigger)
+            _cs_trigger_state = 1;   // 相当于高电平触发 (Equivalent to active-high trigger)
         #endif
     }else {
         #if Z_MIN_PROBE_ENDSTOP_HIT_STATE == LOW
-            cs_trigger_state = 1;   // 相当于低电平未触发 (Equivalent to active-low not triggered)
+            _cs_trigger_state = 1;   // 相当于低电平未触发 (Equivalent to active-low not triggered)
         #else
-            cs_trigger_state = 0;   // 相当于高电平未触发 (Equivalent to active-high not triggered)
+            _cs_trigger_state = 0;   // 相当于高电平未触发 (Equivalent to active-high not triggered)
         #endif
-    }
-       
+    }     
 }
 
 /*********************************************************************************************************************
@@ -466,7 +492,7 @@ uint8_t CS1237::read_config() {
     return data;
 }
 
-uint32_t CS1237::data_read() {
+uint32_t CS1237::get_raw_data() {
 
     uint8_t i=0;
 	uint32_t data = 0x0;
@@ -502,6 +528,8 @@ uint32_t CS1237::data_read() {
     // CRITICAL_SECTION_END();
 
     drdy_mode_set(CS1237_DOUT_INTPUT);
+
+    // SERIAL_ECHOLNPGM("CS1237: raw data: ", data);
 
     return data;
 }
