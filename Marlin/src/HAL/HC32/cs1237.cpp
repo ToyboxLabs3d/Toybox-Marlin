@@ -496,7 +496,6 @@ uint32_t CS1237::get_raw_data() {
     const int max_tries = 3;
 
     for(int try_num=0; try_num < max_tries; try_num++) {
-        uint8_t i=0;
         uint32_t data = 0x0;
 
         _build_data();
