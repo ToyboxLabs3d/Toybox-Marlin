@@ -61,8 +61,8 @@ private:
     int8_t _prev_values_index = 0;
     uint32_t _last_read_time_ms = 0;
 #ifdef LOG_CS1237_SAMPLE_RATE
-    uint32_t _burst_start_time_ms = 0;
-    int16_t _burst_count = 0;
+    uint32_t _sample_count_start_time_ms = 0;
+    int16_t _sample_count = 0;
 #endif
 };
 

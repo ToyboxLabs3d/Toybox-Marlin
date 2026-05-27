@@ -235,14 +235,14 @@ int32_t CS1237::get_current_value()
             // SERIAL_ECHOLNPGM("CS1237: value: ", _prev_values[_prev_values_index]);
         }
 #ifdef LOG_CS1237_SAMPLE_RATE
-        _burst_start_time_ms = millis();
-        _burst_count = CS1237_NUM_PREV_VALUES-1;
+        _sample_count_start_time_ms = millis();
+        _sample_count = CS1237_NUM_PREV_VALUES-1;
 #endif
     }
     _last_read_time_ms = millis();
 #ifdef LOG_CS1237_SAMPLE_RATE
-    if(_burst_count == 0) {
-        _burst_start_time_ms = millis();
+    if(_sample_count == 0) {
+        _sample_count_start_time_ms = millis();
     }
 #endif
     int32_t raw_data = (int32_t)(get_raw_data());
@@ -253,10 +253,10 @@ int32_t CS1237::get_current_value()
     _prev_values_index = (_prev_values_index + 1) % CS1237_NUM_PREV_VALUES;
 
 #ifdef LOG_CS1237_SAMPLE_RATE
-    if(++_burst_count == 100) {
-        const float samples_per_sec = (_burst_count*1000.0) / float(millis() - _burst_start_time_ms) ;
+    if(++_sample_count == 800) {
+        const float samples_per_sec = (_sample_count*1000.0) / float(millis() - _sample_count_start_time_ms) ;
         SERIAL_ECHOLN("CS1237: SR: ", samples_per_sec);
-        _burst_count = 0;
+        _sample_count = 0;
     }
 #endif
 
