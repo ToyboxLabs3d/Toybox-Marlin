@@ -2551,7 +2551,7 @@
 //#define EDITABLE_HOMING_FEEDRATE
 
 // Validate that endstops are triggered on homing moves
-#ifdef ENV_CHARLIE
+#if defined(ENV_CHARLIE) || defined(ENV_ALPHA4)
 #define VALIDATE_HOMING_ENDSTOPS
 #endif
 // @section calibrate
