@@ -2047,7 +2047,7 @@
 #define Y_MIN_POS 0
 
 #ifdef ENV_ALPHA4
-  #define Z_MIN_POS -5
+  #define Z_MIN_POS -10
 #else
   #define Z_MIN_POS 0
 #endif
