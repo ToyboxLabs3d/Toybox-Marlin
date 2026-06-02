@@ -4,7 +4,7 @@
     #define BUILD_NUMBER 10
     #define VERSION_STRING "1.0.1"
 #elif defined(ENV_ALPHA4)
-    #define BUILD_NUMBER 206
+    #define BUILD_NUMBER 207
     #define VERSION_STRING "1.0.0"
 #elif defined(ENV_CHARLIE)
     #define BUILD_NUMBER 101
