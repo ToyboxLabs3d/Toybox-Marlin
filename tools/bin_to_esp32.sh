@@ -21,7 +21,7 @@ info "Marlin PIO environment: ${MARLIN_PIO_ENV}"
 
 case "$MARLIN_PIO_ENV" in
     Alpha3)
-        DEST_DIR="${ESP32_DIR}/data_common/alpha_3"
+        DEST_DIR="${ESP32_DIR}/other_data/alpha_3"
         ;;
     Alpha4)
         DEST_DIR="${ESP32_DIR}/app1_other_data/alpha_4"
