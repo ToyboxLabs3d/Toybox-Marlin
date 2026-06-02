@@ -35,7 +35,7 @@ if [ -n "$(git status --porcelain)" ]; then
 fi
 
 LOCAL_TAGS=$(git tag --points-at HEAD)
-REMOTE_TAGS=$(git ls-remote --tags --refs origin | awk '{print $2}' | sed 's#refs/tags/##')
+REMOTE_TAGS=$(git ls-remote --tags --refs toybox | awk '{print $2}' | sed 's#refs/tags/##')
 COMMON_TAGS=$(comm -12 <(echo "$LOCAL_TAGS" | sort) <(echo "$REMOTE_TAGS" | sort))
 
 info "Local tags: ${LOCAL_TAGS}"
