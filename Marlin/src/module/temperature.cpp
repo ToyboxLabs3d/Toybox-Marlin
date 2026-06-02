@@ -436,6 +436,7 @@ PGMSTR(str_t_heating_failed, STR_T_HEATING_FAILED);
 #if HAS_FAN
 
   uint8_t Temperature::fan_speed[FAN_COUNT] = ARRAY_N_1(FAN_COUNT, FAN_OFF_PWM);
+  celsius_t Temperature::fan_off_temperature[FAN_COUNT] = ARRAY_N_1(FAN_COUNT, 0);
 
   #if ENABLED(EXTRA_FAN_SPEED)
 
@@ -492,6 +493,9 @@ PGMSTR(str_t_heating_failed, STR_T_HEATING_FAILED);
     if (fan >= FAN_COUNT) return;
 
     fan_speed[fan] = speed;
+    if(speed == FAN_OFF_PWM) {
+      fan_off_temperature[fan] = 0;
+    }
 
     #if NUM_REDUNDANT_FANS
       if (fan == 0) {
@@ -501,6 +505,23 @@ PGMSTR(str_t_heating_failed, STR_T_HEATING_FAILED);
     #endif
 
     TERN_(REPORT_FAN_CHANGE, report_fan_speed(fan));
+  }
+
+  void Temperature::set_fan_off_temperature(uint8_t fan, celsius_t temp) {
+    if (fan >= FAN_COUNT) return;
+    fan_off_temperature[fan] = temp;
+  }
+
+  void Temperature::manage_fan_auto_off() {
+    FANS_LOOP(i) {
+      if (fan_speed[i] != FAN_OFF_PWM && fan_off_temperature[i] > 0) {
+        celsius_t temp = degHotend(active_extruder);
+        if (temp < fan_off_temperature[i]) {
+          set_fan_speed(i, FAN_OFF_PWM);
+          fan_off_temperature[i] = 0;
+        }
+      }
+    }
   }
 
   #if ENABLED(REPORT_FAN_CHANGE)
@@ -2336,6 +2357,8 @@ void Temperature::task() {
 
   // Handle Hotend Temp Errors, Heating Watch, etc.
   TERN_(HAS_HOTEND, manage_hotends(ms));
+
+  manage_fan_auto_off();
 
   #if HAS_TEMP_REDUNDANT
   {

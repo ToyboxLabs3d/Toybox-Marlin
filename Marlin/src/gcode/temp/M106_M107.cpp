@@ -102,12 +102,20 @@ void GcodeSuite::M107() {
   if (pfan >= _CNT_P) return;
   if (FAN_IS_REDUNDANT(pfan)) return;
 
-  thermalManager.set_fan_speed(pfan, 0);
+  if (parser.seenval('S')){
+    celsius_t off_temp = parser.value_celsius();
+    thermalManager.set_fan_off_temperature(pfan, off_temp);
 
-  if (TERN0(DUAL_X_CARRIAGE, idex_is_duplicating()))  // pfan == 0 when duplicating
-    thermalManager.set_fan_speed(1 - pfan, 0);
-
-  TERN_(LASER_SYNCHRONOUS_M106_M107, planner.buffer_sync_block(BLOCK_BIT_SYNC_FANS));
+    if (TERN0(DUAL_X_CARRIAGE, idex_is_duplicating()))  // pfan == 0 when duplicating
+      thermalManager.set_fan_off_temperature(1 - pfan, off_temp);
+  }else{
+    thermalManager.set_fan_speed(pfan, 0);
+  
+    if (TERN0(DUAL_X_CARRIAGE, idex_is_duplicating()))  // pfan == 0 when duplicating
+      thermalManager.set_fan_speed(1 - pfan, 0);
+  
+    TERN_(LASER_SYNCHRONOUS_M106_M107, planner.buffer_sync_block(BLOCK_BIT_SYNC_FANS));
+  }
 }
 
 #endif // HAS_FAN
