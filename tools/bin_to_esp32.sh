@@ -3,20 +3,20 @@ set -euo pipefail
 
 cd "$(dirname "$0")"/..
 
-source ~/.platformio/penv/bin/activate
+source ./tools/lib/common.sh
 
 if [ -z "${ESP32_DIR:-}" ]; then
-    echo "need to set ESP32_DIR environment variable to the path of the ESP32 firmware"
+    err "need to set ESP32_DIR environment variable to the path of the ESP32 firmware"
     exit 1
 fi
 
 if [ -z "${1:-}" ]; then
-    echo "need to provide Marlin PIO environment as the first argument"
+    err "need to provide Marlin PIO environment as the first argument"
     exit 1
 fi
 
 MARLIN_PIO_ENV="$1"
-echo "Marlin PIO environment: ${MARLIN_PIO_ENV}"
+info "Marlin PIO environment: ${MARLIN_PIO_ENV}"
 
 
 case "$MARLIN_PIO_ENV" in
@@ -27,23 +27,33 @@ case "$MARLIN_PIO_ENV" in
         DEST_DIR="${ESP32_DIR}/app1_other_data/alpha_4"
         ;;
     *)
-        echo "unknown env: $MARLIN_PIO_ENV"
+        err "unknown env: $MARLIN_PIO_ENV"
         exit 1
         ;;
 esac
 
+if [ "${2:-}" = "--risky-mode" ]; then
+    warn "RISKY MODE ENABLED: Not doing full rebuild. THIS IS INAPPROPRIATE FOR PRODUCTION ESP32 BUILDS."
+else
+    step "pio fullclean"
+    pio run -e "${MARLIN_PIO_ENV}" -t fullclean
+fi
+
+step "pio build"
 pio run -e "${MARLIN_PIO_ENV}" 
 
 MARLIN_BIN=".pio/build/${MARLIN_PIO_ENV}/firmware.bin"
 MARLIN_BUILD=$(strings "${MARLIN_BIN}" | grep "Toybox-marlin BUILD:" | awk -F'[ ,]' '{print $3}')
 
-echo "Marlin bin: ${MARLIN_BIN}"
-echo "Marlin build: ${MARLIN_BUILD}"
+info "Marlin bin: ${MARLIN_BIN}"
+info "Marlin build: ${MARLIN_BUILD}"
 
 
-echo "copying ${MARLIN_BIN} to ${DEST_DIR}"
+step "copying ${MARLIN_BIN} to ${DEST_DIR}"
 mkdir -p "${DEST_DIR}"
 cp "${MARLIN_BIN}" "${DEST_DIR}/marlin.bin"
 
-echo "writing ${MARLIN_BUILD} to ${DEST_DIR}/marlin_ver"
+step "writing ${MARLIN_BUILD} to ${DEST_DIR}/marlin_ver"
 printf "%s" "${MARLIN_BUILD}" > "${DEST_DIR}/marlin_ver"
+
+success "Marlin firmware for ${MARLIN_PIO_ENV} written to ${DEST_DIR}"
