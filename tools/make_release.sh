@@ -49,7 +49,7 @@ fi
 BUILD_TAG=$(echo "$COMMON_TAGS" | grep -E '^[0-9]+$' || true)
 if [[ $(echo "$BUILD_TAG" | wc -l) -gt 1 ]]; then
     err "Multiple common tags that look like build tags found: $BUILD_TAG. Please ensure only one tag that looks like a build tag (all numbers) is on the current commit."
-    # exit 1
+    exit 1
 
 fi
 if [ -z "$BUILD_TAG" ]; then
