@@ -63,8 +63,8 @@ GIT_COMMIT_HASH="$(git rev-parse --short HEAD)"
 
 BIN_FILE="./.pio/build/${MARLIN_PIO_ENV}/firmware.bin"
 HASH_FILE="./.pio/build/${MARLIN_PIO_ENV}/hash.txt"
-OUTPUT_BIN_FILE="esp32-${MARLIN_PIO_ENV}_${BUILD_TAG}-${GIT_COMMIT_HASH}-$(date +%Y.%m.%d).bin"
-HASH_OUTPUT_FILE="esp32-${MARLIN_PIO_ENV}_${BUILD_TAG}-${GIT_COMMIT_HASH}-$(date +%Y.%m.%d).sha256"
+OUTPUT_BIN_FILE="HC32-Marlin-${MARLIN_PIO_ENV}_${BUILD_TAG}-${GIT_COMMIT_HASH}-$(date +%Y.%m.%d).bin"
+HASH_OUTPUT_FILE="HC32-Marlin-${MARLIN_PIO_ENV}_${BUILD_TAG}-${GIT_COMMIT_HASH}-$(date +%Y.%m.%d).sha256"
 
 
 step "pio fullclean"
