@@ -1345,6 +1345,9 @@ private:
    static void M10011();
    static void M10012();
    #endif
+   #ifdef TOYBOX_PROBE_FUDGING
+   static void M10013();
+   #endif
 
   static void T(const int8_t tool_index) IF_DISABLED(HAS_TOOLCHANGE, { UNUSED(tool_index); });
 

@@ -2489,6 +2489,9 @@
 
 #endif
 
+#ifdef ENV_ALPHA4
+  #define TOYBOX_PROBE_FUDGING
+#endif
 // @section probes
 
 /**

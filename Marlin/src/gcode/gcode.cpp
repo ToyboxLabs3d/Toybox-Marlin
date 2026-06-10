@@ -1168,6 +1168,9 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
       case 10011: M10011(); break;  // 查询当前压力值 (Query current pressure value)
       case 10012: M10012(); break;  // 查询零值 (Query zero value)
       #endif
+      #ifdef TOYBOX_PROBE_FUDGING
+      case 10013: M10013(); break;  // set probing z-offset fudge factor
+      #endif
       
       default: parser.unknown_command_warning(); break;
     }

@@ -1047,7 +1047,12 @@ float Probe::probe_at_point(
 
   // Restore the Z homing current
   TERN_(PROBING_USE_CURRENT_HOME, restore_homing_current(Z_AXIS));
-
+#ifdef TOYBOX_PROBE_FUDGING
+  if(_z_offset_fudge_factor != 0.0) {
+    SERIAL_ECHOLNPGM("Applying Z offset fudge factor: ", _z_offset_fudge_factor, " measured_z: ", measured_z, " -> ", measured_z + _z_offset_fudge_factor);
+    measured_z += _z_offset_fudge_factor;
+  }
+#endif
   return measured_z;
 }
 
@@ -1102,6 +1107,10 @@ float Probe::probe_at_point(
     }
   }
 
+#endif
+
+#ifdef TOYBOX_PROBE_FUDGING
+float Probe::_z_offset_fudge_factor = 0.0;
 #endif
 
 #endif // HAS_BED_PROBE
