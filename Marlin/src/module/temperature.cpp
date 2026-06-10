@@ -493,9 +493,7 @@ PGMSTR(str_t_heating_failed, STR_T_HEATING_FAILED);
     if (fan >= FAN_COUNT) return;
 
     fan_speed[fan] = speed;
-    if(speed == FAN_OFF_PWM) {
-      fan_off_temperature[fan] = 0;
-    }
+    fan_off_temperature[fan] = 0;
 
     #if NUM_REDUNDANT_FANS
       if (fan == 0) {
@@ -514,7 +512,7 @@ PGMSTR(str_t_heating_failed, STR_T_HEATING_FAILED);
 
   void Temperature::manage_fan_auto_off() {
     FANS_LOOP(i) {
-      if (fan_speed[i] != FAN_OFF_PWM && fan_off_temperature[i] > 0) {
+      if (fan_off_temperature[i] > 0) {
         celsius_t temp = degHotend(active_extruder);
         if (temp < fan_off_temperature[i]) {
           set_fan_speed(i, FAN_OFF_PWM);

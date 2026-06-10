@@ -1193,7 +1193,7 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
   if (!no_ok
   #if ENABLED(TOYBOX_FAST_CMDS)
     // Toybox Alex: If we're in the middle of a fast cancel, then we just cleared the queue.
-    // This means the current command is no longer valid. If we try to send and "ok" it will
+    // This means the current command is no longer valid. If we try to send an "ok" it will
     // just be the wrong line number.
     && !stop_running_move
   #endif
