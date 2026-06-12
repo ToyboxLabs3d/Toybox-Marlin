@@ -2826,6 +2826,7 @@
   #if ENABLED(FWRETRACT)
     #define FWRETRACT_AUTORETRACT             // Override slicer retractions
     #define TOYBOX_ADVANCED_AUTORETRACT
+    #define TOYBOX_ADVANCED_AUTORETRACT_MAX_PERMITED_RETRACT_LENGTH 2.0
     #define TOYBOX_ADVANCED_AUTORETRACT_ON_DEFAULT
     #if ENABLED(FWRETRACT_AUTORETRACT)
       #define MIN_AUTORETRACT             0.0 // (mm) Don't convert E moves under this length

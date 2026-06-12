@@ -146,7 +146,7 @@ void FWRetract::retract(const bool retracting, bool fake /* = false*/
       if(e_move == 0.0f){
         retracted_amnt = retracting ? MAX(retracted_amnt, settings.retract_length) : 0.0f; 
       }else{
-        retracted_amnt = constrain(retracted_amnt - e_move, 0.0f, MAX_AUTORETRACT);        
+        retracted_amnt = constrain(retracted_amnt - e_move, 0.0f, TOYBOX_ADVANCED_AUTORETRACT_MAX_PERMITED_RETRACT_LENGTH);        
       }
       if(retracted_amnt < 0.001f && retracted_amnt > -0.001f){
         retracted_amnt = 0.0f; // rounding error fix
@@ -182,7 +182,7 @@ void FWRetract::retract(const bool retracting, bool fake /* = false*/
       }
       const float old_retracted_amnt = retracted_amnt;
       retracted_amnt -= e_move;
-      retracted_amnt = constrain(retracted_amnt, 0.0f, MAX_AUTORETRACT);
+      retracted_amnt = constrain(retracted_amnt, 0.0f, TOYBOX_ADVANCED_AUTORETRACT_MAX_PERMITED_RETRACT_LENGTH);
       if(retracted_amnt < 0.001f && retracted_amnt > -0.001f){
         // rounding error fix.
         retracted_amnt = 0.0f;
@@ -191,7 +191,7 @@ void FWRetract::retract(const bool retracting, bool fake /* = false*/
         next_retracted_state = true;
       }
 
-      if(retracted_amnt < 0.0f || retracted_amnt > MAX_AUTORETRACT){
+      if(retracted_amnt < 0.0f || retracted_amnt > TOYBOX_ADVANCED_AUTORETRACT_MAX_PERMITED_RETRACT_LENGTH){
         SERIAL_ECHOLNPGM("ERROR: Auto-retract amount out of bounds");
         retracted_amnt = old_retracted_amnt;
         return;
