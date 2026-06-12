@@ -83,14 +83,33 @@ void GcodeSuite::G0_G1(TERN_(HAS_FAST_MOVES, const bool fast_move/*=false*/)) {
       if (fwretract.autoretract_enabled && parser.seen_test('E')
         && !parser.seen(STR_AXES_MAIN)
       ) {
+        // SERIAL_ECHOLNPGM("E-only move detected, checking for autoretract/recover... current_position.e: ", current_position.e, " destination.e: ", destination.e);
         const float echange = destination.e - current_position.e;
-        // Is this a retract or recover move?
-        if (WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT) && fwretract.retracted[active_extruder] == (echange > 0.0)) {
+        // SERIAL_ECHOLNPGM("echange: ", echange, " current_position.e: ", current_position.e, " destination.e: ", destination.e, " MIN_AUTORETRACT: ", MIN_AUTORETRACT, " MAX_AUTORETRACT: ", MAX_AUTORETRACT);
+        if (echange != 0.0f && WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT)) {
+          // SERIAL_ECHOLNPGM("Autoretract/recover move detected, converting to firmware retract/recover...");
           current_position.e = destination.e;       // Hide a G1-based retract/recover from calculations
           sync_plan_position_e();                   // AND from the planner
-          return fwretract.retract(echange < 0.0);  // Firmware-based retract/recover (double-retract ignored)
+          return fwretract.retract(echange < 0.0, false 
+          #ifdef TOYBOX_ADVANCED_AUTORETRACT
+            , echange
+          #endif
+          );  // Firmware-based retract/recover (double-retract ignored)
+        } 
+        #ifdef TOYBOX_ADVANCED_AUTORETRACT
+          else if (fwretract.in_advanced_autoretract_mode() && ABS(echange) > MAX_AUTORETRACT) {
+            fwretract.retract(echange < 0.0, true, echange);  // fake mode
+          }
+        #endif
+      } 
+      #ifdef TOYBOX_ADVANCED_AUTORETRACT
+        else if (fwretract.in_advanced_autoretract_mode() && parser.seen_test('E')) {
+          const float echange = destination.e - current_position.e;
+          if(echange != 0.0f){
+             fwretract.retract(echange < 0.0, true, echange);  // fake mode
+          }
         }
-      }
+      #endif
     }
 
   #endif // FWRETRACT

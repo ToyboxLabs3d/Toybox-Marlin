@@ -443,6 +443,13 @@ void GcodeSuite::G2_G3(const bool clockwise) {
 
   get_destination_from_command();   // Get X Y [Z[I[J[K...]]]] [E] F (and set cutter power)
 
+  #ifdef TOYBOX_ADVANCED_AUTORETRACT
+    if (fwretract.in_advanced_autoretract_mode() && parser.seen_test('E')) {
+      const float echange = destination.e - current_position.e;
+      fwretract.retract(echange < 0.0, true, echange);  // fake mode
+    }
+  #endif
+
   TERN_(SF_ARC_FIX, relative_mode = relative_mode_backup);
 
   ab_float_t arc_offset = { 0, 0 };

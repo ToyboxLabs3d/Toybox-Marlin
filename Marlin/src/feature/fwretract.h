@@ -40,13 +40,33 @@ typedef struct {
 
 #if ENABLED(FWRETRACT)
 
+#ifdef TOYBOX_ADVANCED_AUTORETRACT
+enum class AutoRetractMode : uint8_t {
+  OFF,
+  NORMAL,
+  ADVANCED,
+  NUM_MODES
+};
+#endif
+
 class FWRetract {
 private:
   #if HAS_MULTI_EXTRUDER
     static Flags<EXTRUDERS> retracted_swap;        // Which extruders are swap-retracted
   #endif
+  #ifdef TOYBOX_ADVANCED_AUTORETRACT
+    static float retracted_amnt; // actual amount retracted. differnent from current_retract[active_extruder] which is used for planner coordinate transforms or whatever.
+    static AutoRetractMode autoretract_mode;
+    static void set_autoretract_mode(const AutoRetractMode mode);
+  #endif
+
 
 public:
+  #ifdef TOYBOX_ADVANCED_AUTORETRACT
+   static bool in_advanced_autoretract_mode() {
+     return autoretract_mode == AutoRetractMode::ADVANCED;
+   }
+  #endif
   static fwretract_settings_t settings;
 
   #if ENABLED(FWRETRACT_AUTORETRACT)
@@ -72,7 +92,12 @@ public:
     #endif
   }
 
-  static void retract(const bool retracting E_OPTARG(bool swapping=false));
+  static void retract(const bool retracting, bool fake=false
+    #ifdef TOYBOX_ADVANCED_AUTORETRACT
+      , float e_move = 0.0f
+    #endif
+    E_OPTARG(bool swapping=false));
+    
 
   static void M207_report();
   static void M207();

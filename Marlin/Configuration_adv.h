@@ -2818,29 +2818,64 @@
  *
  * Note that M207 / M208 / M209 settings are saved to EEPROM.
  */
-#define FWRETRACT
-#if ENABLED(FWRETRACT)
-  #define FWRETRACT_AUTORETRACT             // Override slicer retractions
-  #if ENABLED(FWRETRACT_AUTORETRACT)
-    #define MIN_AUTORETRACT             0.1 // (mm) Don't convert E moves under this length
-    #define MAX_AUTORETRACT            10.0 // (mm) Don't convert E moves over this length
-  #endif
-  #ifdef ENV_ALPHA4
+
+#ifdef ENV_ALPHA4
+
+  #define FWRETRACT
+  
+  #if ENABLED(FWRETRACT)
+    #define FWRETRACT_AUTORETRACT             // Override slicer retractions
+    #define TOYBOX_ADVANCED_AUTORETRACT
+    #define TOYBOX_ADVANCED_AUTORETRACT_ON_DEFAULT
+    #if ENABLED(FWRETRACT_AUTORETRACT)
+      #define MIN_AUTORETRACT             0.0 // (mm) Don't convert E moves under this length
+      #define MAX_AUTORETRACT            3.0 // (mm) Don't convert E moves over this length
+    #endif
+
     // Toybox Alex: This is the same value as what we use for slicing. We should probably use 
     // this value with A3, but I'm not setting it now, because it hasn't been tested.
     #define RETRACT_LENGTH               0.4   // (mm) Default retract length (positive value)
-  #else
-    #define RETRACT_LENGTH               3     // (mm) Default retract length (positive value)
+
+    #define RETRACT_LENGTH_SWAP          13   // (mm) Default swap retract length (positive value)
+    #define RETRACT_FEEDRATE             45   // (mm/s) Default feedrate for retracting
+    #define RETRACT_ZRAISE                0   // (mm) Default retract Z-raise
+    #define RETRACT_RECOVER_LENGTH        0   // (mm) Default additional recover length (added to retract length on recover)
+    #define RETRACT_RECOVER_LENGTH_SWAP   0   // (mm) Default additional swap recover length (added to retract length on recover from toolchange)
+    #define RETRACT_RECOVER_FEEDRATE      8   // (mm/s) Default feedrate for recovering from retraction
+    #define RETRACT_RECOVER_FEEDRATE_SWAP 8   // (mm/s) Default feedrate for recovering from swap retraction
+    #if ENABLED(MIXING_EXTRUDER)
+      //#define RETRACT_SYNC_MIXING           // Retract and restore all mixing steppers simultaneously
+    #endif
   #endif
-  #define RETRACT_LENGTH_SWAP          13   // (mm) Default swap retract length (positive value)
-  #define RETRACT_FEEDRATE             45   // (mm/s) Default feedrate for retracting
-  #define RETRACT_ZRAISE                0   // (mm) Default retract Z-raise
-  #define RETRACT_RECOVER_LENGTH        0   // (mm) Default additional recover length (added to retract length on recover)
-  #define RETRACT_RECOVER_LENGTH_SWAP   0   // (mm) Default additional swap recover length (added to retract length on recover from toolchange)
-  #define RETRACT_RECOVER_FEEDRATE      8   // (mm/s) Default feedrate for recovering from retraction
-  #define RETRACT_RECOVER_FEEDRATE_SWAP 8   // (mm/s) Default feedrate for recovering from swap retraction
-  #if ENABLED(MIXING_EXTRUDER)
-    //#define RETRACT_SYNC_MIXING           // Retract and restore all mixing steppers simultaneously
+
+#else
+
+  #define FWRETRACT
+
+
+  #if ENABLED(FWRETRACT)
+    #define FWRETRACT_AUTORETRACT             // Override slicer retractions
+    #if ENABLED(FWRETRACT_AUTORETRACT)
+      #define MIN_AUTORETRACT             0.1 // (mm) Don't convert E moves under this length
+      #define MAX_AUTORETRACT            10.0 // (mm) Don't convert E moves over this length
+    #endif
+    #ifdef ENV_ALPHA4
+      // Toybox Alex: This is the same value as what we use for slicing. We should probably use 
+      // this value with A3, but I'm not setting it now, because it hasn't been tested.
+      #define RETRACT_LENGTH               0.4   // (mm) Default retract length (positive value)
+    #else
+      #define RETRACT_LENGTH               3     // (mm) Default retract length (positive value)
+    #endif
+    #define RETRACT_LENGTH_SWAP          13   // (mm) Default swap retract length (positive value)
+    #define RETRACT_FEEDRATE             45   // (mm/s) Default feedrate for retracting
+    #define RETRACT_ZRAISE                0   // (mm) Default retract Z-raise
+    #define RETRACT_RECOVER_LENGTH        0   // (mm) Default additional recover length (added to retract length on recover)
+    #define RETRACT_RECOVER_LENGTH_SWAP   0   // (mm) Default additional swap recover length (added to retract length on recover from toolchange)
+    #define RETRACT_RECOVER_FEEDRATE      8   // (mm/s) Default feedrate for recovering from retraction
+    #define RETRACT_RECOVER_FEEDRATE_SWAP 8   // (mm/s) Default feedrate for recovering from swap retraction
+    #if ENABLED(MIXING_EXTRUDER)
+      //#define RETRACT_SYNC_MIXING           // Retract and restore all mixing steppers simultaneously
+    #endif
   #endif
 #endif
 
