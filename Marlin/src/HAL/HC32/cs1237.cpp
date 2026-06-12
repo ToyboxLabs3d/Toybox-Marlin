@@ -208,7 +208,7 @@ static int32_t get_median_of_prev_values(const int32_t *prev_values) {
 
     const int median_index = CS1237_NUM_PREV_VALUES / 2;
 
-    // enough of an insertion sort to get the median value in place; no need to fully sort the array
+    // enough of a selection sort to get the median value in place; no need to fully sort the array
     for(int sort_iter=0; sort_iter <= median_index; sort_iter++) {
         int32_t min_value = buffer[sort_iter];
         int min_index = sort_iter;
@@ -253,7 +253,7 @@ int32_t CS1237::get_current_value()
     _prev_values_index = (_prev_values_index + 1) % CS1237_NUM_PREV_VALUES;
 
 #ifdef LOG_CS1237_SAMPLE_RATE
-    if(++_sample_count == 800) {
+    if(++_sample_count == 1600) {
         const float samples_per_sec = (_sample_count*1000.0) / float(millis() - _sample_count_start_time_ms) ;
         SERIAL_ECHOLN("CS1237: SR: ", samples_per_sec);
         _sample_count = 0;
@@ -493,7 +493,7 @@ uint8_t CS1237::read_config() {
 }
 
 uint32_t CS1237::get_raw_data() {
-    const int max_tries = 3;
+    const int max_tries = 5;
 
     for(int try_num=0; try_num < max_tries; try_num++) {
         uint32_t data = 0x0;
