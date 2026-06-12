@@ -187,6 +187,7 @@ void CS1237::set_zero() {
         }
     }
     cs_zero_val = (i==0) ? 0 : sum / i;
+    SERIAL_ECHOLNPGM("CS1237: zero value set to ", cs_zero_val);
 }
 
 void CS1237::set_threshold(int32_t thr)
@@ -310,9 +311,16 @@ void CS1237::calc_trigger_state()
         return;
     }
 
+    // TODO (Toybox Alex): Why are we using abs here?
     int32_t current_val = fabs((value - cs_zero_val)); 
         
     if(current_val >= _cs_threshold) {
+        SERIAL_ECHOLNPGM("CS1237: triggered! value=", value, " zero=", cs_zero_val, " threshold=", _cs_threshold);
+        SERIAL_ECHOLNPGM("CS1237: prev values: ");
+        for(int i=0; i < CS1237_NUM_PREV_VALUES; i++){
+            SERIAL_ECHOLNPGM("  ", i, ": ", _prev_values[i]);
+        }
+
         #if Z_MIN_PROBE_ENDSTOP_HIT_STATE == LOW
             _cs_trigger_state = 0;   // 相当于低电平触发 (Equivalent to active-low trigger)
         #else
