@@ -2826,16 +2826,17 @@
   #if ENABLED(FWRETRACT)
     #define FWRETRACT_AUTORETRACT             // Override slicer retractions
     #define TOYBOX_ADVANCED_AUTORETRACT
-    #define TOYBOX_ADVANCED_AUTORETRACT_MAX_PERMITED_RETRACT_LENGTH 2.0
+    #define TOYBOX_ADVANCED_AUTORETRACT_MAX_PERMITED_RETRACT_LENGTH 1.0
     #define TOYBOX_ADVANCED_AUTORETRACT_ON_DEFAULT
     #if ENABLED(FWRETRACT_AUTORETRACT)
       #define MIN_AUTORETRACT             0.0 // (mm) Don't convert E moves under this length
-      #define MAX_AUTORETRACT            3.0 // (mm) Don't convert E moves over this length
+      #define MAX_AUTORETRACT            1000.0 // (mm) Don't convert E moves over this length
     #endif
 
-    // Toybox Alex: This is the same value as what we use for slicing. We should probably use 
-    // this value with A3, but I'm not setting it now, because it hasn't been tested.
-    #define RETRACT_LENGTH               0.4   // (mm) Default retract length (positive value)
+    // #define TOYBOX_FORCE_RETRACT_CONVERSION 
+
+    // Toybox Alex: This is the same value as what we use for slicing for the A4. The A3 is sliced with a 1mm retract. 
+    #define RETRACT_LENGTH               0.4  // (mm) Default retract length (positive value)
 
     #define RETRACT_LENGTH_SWAP          13   // (mm) Default swap retract length (positive value)
     #define RETRACT_FEEDRATE             45   // (mm/s) Default feedrate for retracting
@@ -2861,8 +2862,7 @@
       #define MAX_AUTORETRACT            10.0 // (mm) Don't convert E moves over this length
     #endif
     #ifdef ENV_ALPHA4
-      // Toybox Alex: This is the same value as what we use for slicing. We should probably use 
-      // this value with A3, but I'm not setting it now, because it hasn't been tested.
+      // Change this? A3 is sliced with 1mm retract.
       #define RETRACT_LENGTH               0.4   // (mm) Default retract length (positive value)
     #else
       #define RETRACT_LENGTH               3     // (mm) Default retract length (positive value)
