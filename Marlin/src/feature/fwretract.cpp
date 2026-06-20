@@ -365,7 +365,6 @@ void FWRetract::retract(const bool retracting, bool fake /* = false*/
 
 
 void FWRetract::clamp_move(){
-  SERIAL_ECHOLNPGM("clamp_move() called. current_position.e: ", current_position.e, " destination.e: ", destination.e, " retracted_amnt: ", retracted_amnt, "------------------------------------------------------------------");
   #ifndef TOYBOX_ADVANCED_AUTORETRACT
     return;
   #else
