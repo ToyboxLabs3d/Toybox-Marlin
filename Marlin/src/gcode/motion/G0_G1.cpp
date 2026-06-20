@@ -78,36 +78,46 @@ void GcodeSuite::G0_G1(TERN_(HAS_FAST_MOVES, const bool fast_move/*=false*/)) {
 
   #if ALL(FWRETRACT, FWRETRACT_AUTORETRACT)
 
+    const float echange = destination.e - current_position.e;
+    const bool is_retract = echange < 0.0f;
+    const bool is_emove = echange != 0.0f;
+    const bool is_only_emove = is_emove && !parser.seen(STR_AXES_MAIN);
+
     if (MIN_AUTORETRACT <= MAX_AUTORETRACT) {
       // When M209 Autoretract is enabled, convert E-only moves to firmware retract/recover moves
-      if (fwretract.autoretract_enabled && parser.seen_test('E')
-        && !parser.seen(STR_AXES_MAIN)
+      if (fwretract.autoretract_enabled && is_only_emove
       ) {
-        // SERIAL_ECHOLNPGM("E-only move detected, checking for autoretract/recover... current_position.e: ", current_position.e, " destination.e: ", destination.e);
-        const float echange = destination.e - current_position.e;
-        // SERIAL_ECHOLNPGM("echange: ", echange, " current_position.e: ", current_position.e, " destination.e: ", destination.e, " MIN_AUTORETRACT: ", MIN_AUTORETRACT, " MAX_AUTORETRACT: ", MAX_AUTORETRACT);
-        if (echange != 0.0f && WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT)) {
-          // SERIAL_ECHOLNPGM("Autoretract/recover move detected, converting to firmware retract/recover...");
+        // Handle E-only moves
+
+        if (is_emove && WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT)) {
+          // E-only move that needs to be limited by autoretract.
+
           current_position.e = destination.e;       // Hide a G1-based retract/recover from calculations
           sync_plan_position_e();                   // AND from the planner
-          return fwretract.retract(echange < 0.0, false 
+          fwretract.retract(is_retract, false
           #ifdef TOYBOX_ADVANCED_AUTORETRACT
             , echange
           #endif
           );  // Firmware-based retract/recover (double-retract ignored)
+          return;
         } 
         #ifdef TOYBOX_ADVANCED_AUTORETRACT
           else if (fwretract.in_advanced_autoretract_mode() && ABS(echange) > MAX_AUTORETRACT) {
-            fwretract.retract(echange < 0.0, true, echange);  // fake mode
+            // E-only move that exceeds the MAX_AUTORETRACT limit. Update fwretract state and do the move normally.
+            fwretract.retract(is_retract, true, echange);  // fake mode
           }
         #endif
       } 
       #ifdef TOYBOX_ADVANCED_AUTORETRACT
-        else if (fwretract.in_advanced_autoretract_mode() && parser.seen_test('E')) {
-          const float echange = destination.e - current_position.e;
-          if(echange != 0.0f){
-             fwretract.retract(echange < 0.0, true, echange);  // fake mode
-          }
+        else if (fwretract.in_advanced_autoretract_mode() && is_emove) {
+          // E-move with other axes. Limit retraction. For extrusion just update fwretract state and do the move normally.
+          
+          if(is_emove && is_retract && WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT)){
+            fwretract.clamp_move();
+          } else if(is_emove && !is_retract && WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT)){
+            // extrusion. update fwretract state but just do the emove normally.
+             fwretract.retract(/* is_retract */ false, /* fake */ true, echange);  
+          } 
         }
       #endif
     }

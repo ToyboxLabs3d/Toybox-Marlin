@@ -28,7 +28,7 @@
 #include "../inc/MarlinConfigPre.h"
 
 typedef struct {
-       float retract_length;                      // M207 S - G10 Retract length
+       float retract_length = RETRACT_LENGTH;      // M207 S - G10 Retract length
   feedRate_t retract_feedrate_mm_s;               // M207 F - G10 Retract feedrate
        float retract_zraise,                      // M207 Z - G10 Retract hop size
              retract_recover_extra;               // M208 S - G11 Recover length
@@ -66,6 +66,7 @@ public:
    static bool in_advanced_autoretract_mode() {
      return autoretract_mode == AutoRetractMode::ADVANCED;
    }
+   static void clamp_move();
   #endif
   static fwretract_settings_t settings;
 
