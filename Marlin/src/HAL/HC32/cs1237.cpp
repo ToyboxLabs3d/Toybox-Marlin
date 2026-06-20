@@ -31,7 +31,7 @@
 #define MICROS_PER_SEC 1'000'000ULL
 
 
-
+// static uint32_t pop_counts[32] = {0};
 
 static void st_timer_init(void) {
     dwt_init();
@@ -258,6 +258,10 @@ int32_t CS1237::get_current_value()
         const float samples_per_sec = (_sample_count*1000.0) / float(millis() - _sample_count_start_time_ms) ;
         SERIAL_ECHOLN("CS1237: SR: ", samples_per_sec);
         _sample_count = 0;
+
+        // for(int i=0; i<32; i++) {
+        //     SERIAL_ECHOLNPGM("pop count[", i, "] = ", pop_counts[i]);
+        // }
     }
 #endif
 
@@ -315,11 +319,6 @@ void CS1237::calc_trigger_state()
     int32_t current_val = fabs((value - cs_zero_val)); 
         
     if(current_val >= _cs_threshold) {
-        SERIAL_ECHOLNPGM("CS1237: triggered! value=", value, " zero=", cs_zero_val, " threshold=", _cs_threshold);
-        SERIAL_ECHOLNPGM("CS1237: prev values: ");
-        for(int i=0; i < CS1237_NUM_PREV_VALUES; i++){
-            SERIAL_ECHOLNPGM("  ", i, ": ", _prev_values[i]);
-        }
 
         #if Z_MIN_PROBE_ENDSTOP_HIT_STATE == LOW
             _cs_trigger_state = 0;   // 相当于低电平触发 (Equivalent to active-low trigger)
@@ -540,11 +539,13 @@ uint32_t CS1237::get_raw_data() {
 
         static_assert(sizeof(data) == sizeof(unsigned int));
         const int bit_count = __builtin_popcount(data);
-        if(bit_count > 2 && bit_count < 22) {
+        // pop_counts[bit_count]++;
+        if(bit_count > 2 && bit_count < 20) {
             return data;
         }
         SERIAL_ECHOLNPGM("CS1237: invalid data read (try ", try_num+1, "/", max_tries, "): ", data, "  bit_count: ", bit_count);  
     }
+    SERIAL_ECHOLNPGM("CS1237: FAILED to read valid data after ", max_tries, " tries");
     return (1 << 23) - 1; // max possible positive value. data is a 24 bit signed value.
 }
 
