@@ -4,7 +4,7 @@
 #include <library/inc/hc32f460_gpio.h>
 
 #define CS1237_NUM_PREV_VALUES 11
-#define LOG_CS1237_SAMPLE_RATE 
+// #define LOG_CS1237_SAMPLE_RATE 
 
 static_assert(CS1237_NUM_PREV_VALUES % 2 == 1, "CS1237_NUM_PREV_VALUES must be odd to have a clear median");
 class CS1237{
