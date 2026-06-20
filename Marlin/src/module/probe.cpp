@@ -1020,6 +1020,12 @@ float Probe::probe_at_point(
 
     measured_z = deploy() ? NAN : run_z_probe(sanity_check, z_min_point, z_clearance) + offset.z;
 
+    #if ENABLED(TOYBOX_FAST_CMDS)
+      if(stop_running_move){
+        return measured_z;
+      }
+    #endif
+
     // Deploy succeeded and a successful measurement was done.
     // Raise and/or stow the probe depending on 'raise_after' and settings.
     if (!isnan(measured_z)) {
