@@ -71,13 +71,12 @@ fwretract_settings_t FWRetract::settings;             // M207 S F Z W, M208 S F 
 
 Flags<EXTRUDERS> FWRetract::retracted;                // Which extruders are currently retracted
 
-float FWRetract::current_retract[EXTRUDERS],          // Retract value used by planner
-      FWRetract::current_hop;
+float FWRetract::current_retract[EXTRUDERS] = {0.0f};          // Retract value used by planner
+float FWRetract::current_hop = 0.0f;
 
 void FWRetract::reset() {
   #if ENABLED(FWRETRACT_AUTORETRACT)
     #ifdef TOYBOX_ADVANCED_AUTORETRACT
-      retracted_amnt = 0.0f;
       #ifdef TOYBOX_ADVANCED_AUTORETRACT_ON_DEFAULT
         autoretract_enabled = true;
         autoretract_mode = AutoRetractMode::ADVANCED;
@@ -99,11 +98,6 @@ void FWRetract::reset() {
   settings.swap_retract_recover_feedrate_mm_s = RETRACT_RECOVER_FEEDRATE_SWAP;
   current_hop = 0.0;
 
-  retracted.reset();
-  EXTRUDER_LOOP() {
-    E_TERN_(retracted_swap.clear(e));
-    current_retract[e] = 0.0;
-  }
 }
 
 /**
@@ -129,10 +123,6 @@ void FWRetract::retract(const bool retracting, bool fake /* = false*/
   #endif
   E_OPTARG(bool swapping/*=false*/)) 
 {
-  
-  if(!in_advanced_autoretract_mode() ) {
-    SERIAL_ECHOLNPGM("ADVACNED AUTORETRACT IS OFF. Wtf is wrong with you? -------------------------------------------------------------------------------------");
-  }
 
   // SERIAL_ECHOLNPGM(" enter retract(): retracting: ", AS_DIGIT(retracting), " fake: ", AS_DIGIT(fake)
   //   #ifdef TOYBOX_ADVANCED_AUTORETRACT

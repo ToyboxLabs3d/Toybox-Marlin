@@ -80,7 +80,12 @@ public:
   static float current_retract[EXTRUDERS],         // Retract value used by planner
                current_hop;                        // Hop value used by planner
 
-  FWRetract() { reset(); }
+  FWRetract() { 
+    reset();
+    retracted_amnt = 0.0f;
+    retracted.reset();
+    memset(current_retract, 0, sizeof(current_retract));
+  }
 
   static void reset();
 
