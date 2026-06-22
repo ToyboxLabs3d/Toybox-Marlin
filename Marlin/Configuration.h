@@ -2043,7 +2043,7 @@
 #endif
 
 // Travel limits (linear=mm, rotational=°) after homing, corresponding to endstop positions.
-#define X_MIN_POS 0
+#define X_MIN_POS -3
 #define Y_MIN_POS 0
 
 #ifdef ENV_ALPHA4
