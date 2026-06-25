@@ -98,6 +98,16 @@ void FWRetract::reset() {
   settings.swap_retract_recover_feedrate_mm_s = RETRACT_RECOVER_FEEDRATE_SWAP;
   current_hop = 0.0;
 
+#ifdef TOYBOX_ADVANCED_AUTORETRACT
+  if(autoretract_mode != AutoRetractMode::ADVANCED)
+#endif
+  {
+    retracted.reset();
+    EXTRUDER_LOOP() {
+      E_TERN_(retracted_swap.clear(e));
+      current_retract[e] = 0.0;
+    }
+  }
 }
 
 /**
