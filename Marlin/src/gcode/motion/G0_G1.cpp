@@ -83,48 +83,57 @@ void GcodeSuite::G0_G1(TERN_(HAS_FAST_MOVES, const bool fast_move/*=false*/)) {
     const bool is_emove = echange != 0.0f;
     const bool is_only_emove = is_emove && !parser.seen(STR_AXES_MAIN);
 
+    #ifdef TBOX_ADV_AUTORETRACT
+    bool need_to_track = is_emove;
+    #endif
+
     if (MIN_AUTORETRACT <= MAX_AUTORETRACT) {
       // When M209 Autoretract is enabled, convert E-only moves to firmware retract/recover moves
-      if (fwretract.autoretract_enabled && is_only_emove
-      ) {
+      if (fwretract.autoretract_enabled && is_only_emove) {
         // Handle E-only moves
 
-        if (is_emove && WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT)) {
-          // E-only move that needs to be limited by autoretract.
-
-          current_position.e = destination.e;       // Hide a G1-based retract/recover from calculations
-          sync_plan_position_e();                   // AND from the planner
-          fwretract.retract(is_retract, false
-          #ifdef TOYBOX_ADVANCED_AUTORETRACT
-            , echange
-          #endif
-          );  // Firmware-based retract/recover (double-retract ignored)
-          return;
-        } 
-        #ifdef TOYBOX_ADVANCED_AUTORETRACT
-          else if (fwretract.in_advanced_autoretract_mode() && ABS(echange) > MAX_AUTORETRACT) {
-            // E-only move that exceeds the MAX_AUTORETRACT limit. Update fwretract state and do the move normally.
-            fwretract.retract(is_retract, true, echange);  // fake mode
-          }
-        #endif
-      } 
-      #ifdef TOYBOX_ADVANCED_AUTORETRACT
-        else if (fwretract.in_advanced_autoretract_mode() && is_emove) {
-          // E-move with other axes. Limit retraction. For extrusion just update fwretract state and do the move normally.
+        if ( WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT)) {
+          // E-only move, handled by (advanced) autoretract.
           
-          if(is_emove && is_retract && WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT)){
+          #ifdef TBOX_ADV_AUTORETRACT
+          if(fwretract.in_advanced_autoretract_mode()){
+            // SERIAL_ECHOLNPGM("G0_G1() e_only move. clamping");
             fwretract.clamp_move();
-          } else if(is_emove && !is_retract && WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT)){
-            // extrusion. update fwretract state but just do the emove normally.
-             fwretract.retract(/* is_retract */ false, /* fake */ true, echange);  
-          } 
-        }
+            need_to_track = false;
+          } else 
+          #endif
+          {
+            current_position.e = destination.e;       // Hide a G1-based retract/recover from calculations
+            sync_plan_position_e();                   // AND from the planner
+            // SERIAL_ECHOLNPGM("G0_G1() converting to G10/G11. is_retract: ", AS_DIGIT(is_retract), " echange: ", echange);
+            fwretract.retract(is_retract); // convert to G10/G11
+            return;
+          }
+
+
+        } 
+      } 
+      #ifdef TBOX_ADV_AUTORETRACT
+      else if (fwretract.in_advanced_autoretract_mode() && is_emove && is_retract && WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT)){
+        // SERIAL_ECHOLNPGM("G0_G1() e_move but not e_only_move retract move. clamping");
+        fwretract.clamp_move();
+        need_to_track = false;
+      } 
       #endif
     }
+    
+    #ifdef TBOX_ADV_AUTORETRACT
+      if(need_to_track){
+        fwretract.track_change(echange);
+      }
+    #endif
 
   #endif // FWRETRACT
 
   #if ENABLED(TOYBOX_FAST_CMDS)
+    // FIXME (Toybox Alex): Do these stop running move commands invalidate the current position? 
+    // We already set the destination, but we're not applying it, and it will probably be overwritten
+    // later.
     if(stop_running_move) {
       return;
     }

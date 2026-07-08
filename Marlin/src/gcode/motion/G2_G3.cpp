@@ -443,17 +443,17 @@ void GcodeSuite::G2_G3(const bool clockwise) {
 
   get_destination_from_command();   // Get X Y [Z[I[J[K...]]]] [E] F (and set cutter power)
 
-  #ifdef TOYBOX_ADVANCED_AUTORETRACT
+  #ifdef TBOX_ADV_AUTORETRACT
 
     const float echange = destination.e - current_position.e;
     const bool is_retract = echange < 0.0f;
     const bool is_emove = echange != 0.0f;
 
-    if (fwretract.in_advanced_autoretract_mode() && is_emove) {
-      if(is_retract && WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT)) {
+    if(is_emove){
+      if(is_retract && fwretract.in_advanced_autoretract_mode() && WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT)){
         fwretract.clamp_move();
-      }else{
-        fwretract.retract(false, true, echange);  // fake mode
+      } else {
+        fwretract.track_change(echange);
       }
     }
   #endif
