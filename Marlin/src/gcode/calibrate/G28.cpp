@@ -258,11 +258,6 @@ void GcodeSuite::G28() {
 #endif
 
   // Home (O)nly if position is unknown
-  // if (!axes_should_home() && parser.seen_test('O')) {
-  //   if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("> homing not needed, skip");
-  //   return;
-  // }
-
   if (parser.seen_test('O')) {
     if (!parser.seen_test('X') && !parser.seen_test('Y') &&
         !parser.seen_test('Z')) {

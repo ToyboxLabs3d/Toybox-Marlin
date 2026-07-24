@@ -69,7 +69,6 @@ public:
    static void clamp_move();
    static void track_change(const float e_move); // ie: fake
    static void g10_g11(const bool retracting);
-  //  static void  
   #endif
   static fwretract_settings_t settings;
 
@@ -85,7 +84,9 @@ public:
 
   FWRetract() { 
     reset();
-    retracted_amnt = 0.0f;
+    #ifdef TBOX_ADV_AUTORETRACT
+      retracted_amnt = 0.0f;
+    #endif
     retracted.reset();
     memset(current_retract, 0, sizeof(current_retract));
   }

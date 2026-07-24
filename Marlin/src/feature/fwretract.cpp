@@ -158,6 +158,8 @@ void FWRetract::retract(const bool retracting E_OPTARG(bool swapping/*=false*/))
       if(retracted_amnt < 0.0001f && retracted_amnt > -0.0001f){
         // rounding error fix.
         retracted_amnt = 0.0f;
+      }
+      if(retracted_amnt == 0.0f){
         next_retracted_state = false;
       }else {
         next_retracted_state = true;
@@ -291,12 +293,10 @@ void FWRetract::retract(const bool retracting E_OPTARG(bool swapping/*=false*/))
     if (swapping) retracted_swap.set(active_extruder, retracting);
   #endif
 
-
-    SERIAL_ECHOLNPGM("<< FWRetract::retract() retracting: ", AS_DIGIT(retracting), 
-      " retracted_amnt: ", retracted_amnt, 
-      " current_retract[active_extruder]: ", current_retract[active_extruder], 
-      " retracted[active_extruder]: ", AS_DIGIT(retracted[active_extruder]));
-
+  #ifdef TBOX_ADV_AUTORETRACT
+    SERIAL_ECHOLNPGM("<< FWRetract::retract() retracting: ", AS_DIGIT(retracting));
+    M209_report();
+  #endif
   /* // debugging
         SERIAL_ECHOLNPGM("retracting ", AS_DIGIT(retracting));
     SERIAL_ECHOLNPGM("swapping ", AS_DIGIT(swapping));
@@ -511,8 +511,17 @@ void FWRetract::M208_report() {
 
   void FWRetract::M209_report() {
     TERN_(MARLIN_SMALL_BUILD, return);
-
+#ifdef TBOX_ADV_AUTORETRACT
+    SERIAL_ECHOLNPGM("  M209 mode ", static_cast<uint8_t>(autoretract_mode));
+    SERIAL_ECHOLNPGM("  retracted_amnt: ", retracted_amnt);
+    SERIAL_ECHOLNPGM("  current_retract[active_extruder]: ", current_retract[active_extruder]);
+    SERIAL_ECHOLNPGM("  retracted[active_extruder]: ", AS_DIGIT(retracted[active_extruder]));
+    SERIAL_ECHOLNPGM("  planner.get_axis_position_mm(E_AXIS): ", planner.get_axis_position_mm(E_AXIS));
+    SERIAL_ECHOLNPGM("  current_position.e: ", current_position.e);
+#else
     SERIAL_ECHOLNPGM("  M209 S", AS_DIGIT(autoretract_enabled));
+#endif
+    
   }
 
 #endif // FWRETRACT_AUTORETRACT
