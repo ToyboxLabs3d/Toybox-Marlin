@@ -115,7 +115,7 @@ xyze_pos_t destination; // {0}
 #if SAVED_POSITIONS
   Flags<SAVED_POSITIONS> did_save_position;
   xyze_pos_t stored_position[SAVED_POSITIONS];
-
+  float stored_planner_e_position_mm[SAVED_POSITIONS];
   relative_t stored_axis_relative[SAVED_POSITIONS];
   feedRate_t stored_feedrate[SAVED_POSITIONS];
   uint8_t stored_fanspeed[SAVED_POSITIONS][FAN_COUNT];

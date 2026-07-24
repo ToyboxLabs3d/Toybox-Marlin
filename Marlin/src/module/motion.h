@@ -53,7 +53,7 @@ extern xyze_pos_t current_position,  // High-level current tool position
 #if SAVED_POSITIONS
   extern Flags<SAVED_POSITIONS> did_save_position;
   extern xyze_pos_t stored_position[SAVED_POSITIONS];
-
+  extern float stored_planner_e_position_mm[SAVED_POSITIONS];
   extern relative_t stored_axis_relative[SAVED_POSITIONS];
   extern feedRate_t stored_feedrate[SAVED_POSITIONS];
   extern uint8_t stored_fanspeed[SAVED_POSITIONS][FAN_COUNT];
