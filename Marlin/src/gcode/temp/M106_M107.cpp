@@ -57,8 +57,22 @@
  *           1     = Restore previous speed after T2
  *           2     = Use temporary speed set with T3-255
  *           3-255 = Set the speed for use with T2
+ * 
+ * Toybox Alex: Extra params:
+ * Q - Query fan state.
  */
 void GcodeSuite::M106() {
+
+  if(parser.seen('Q')){
+    for(uint8_t pfan = 0; pfan < _CNT_P; pfan++){
+      if (FAN_IS_REDUNDANT(pfan)) continue;
+      SERIAL_ECHOLNPGM("Fan ", pfan, " speed: ", thermalManager.fan_speed[pfan]);
+      SERIAL_ECHOLNPGM("Fan ", pfan, " off temp: ", thermalManager.fan_off_temperature[pfan]);
+    }
+    return;
+  }
+
+
   const uint8_t pfan = parser.byteval('P', _ALT_P);
   if (pfan >= _CNT_P) return;
   if (FAN_IS_REDUNDANT(pfan)) return;

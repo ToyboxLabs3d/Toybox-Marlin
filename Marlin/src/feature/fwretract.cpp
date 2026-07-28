@@ -514,14 +514,19 @@ void FWRetract::M208_report() {
 #ifdef TBOX_ADV_AUTORETRACT
     SERIAL_ECHOLNPGM("  M209 mode ", static_cast<uint8_t>(autoretract_mode));
     SERIAL_ECHOLNPGM("  retracted_amnt: ", retracted_amnt);
-    SERIAL_ECHOLNPGM("  current_retract[active_extruder]: ", current_retract[active_extruder]);
+    SERIAL_ECHOLNPGM("  current_retract[active_extruder] (planner modifier): ", current_retract[active_extruder]);
     SERIAL_ECHOLNPGM("  retracted[active_extruder]: ", AS_DIGIT(retracted[active_extruder]));
-    SERIAL_ECHOLNPGM("  planner.get_axis_position_mm(E_AXIS): ", planner.get_axis_position_mm(E_AXIS));
+    SERIAL_ECHOLNPGM("  planner.get_axis_position_mm(E_AXIS) (has modifiers applied): ", planner.get_axis_position_mm(E_AXIS));
+    xyze_pos_t planner_pos;
+    planner_pos.reset();
+    planner_pos.e = planner.get_axis_position_mm(E_AXIS);
+    planner.unapply_modifiers(planner_pos);
+    SERIAL_ECHOLNPGM("  planner_pos.e (modifiers unapplied): ", planner_pos.e);
     SERIAL_ECHOLNPGM("  current_position.e: ", current_position.e);
+    SERIAL_ECHOLNPGM("  destination.e: ", destination.e);
 #else
     SERIAL_ECHOLNPGM("  M209 S", AS_DIGIT(autoretract_enabled));
 #endif
-    
   }
 
 #endif // FWRETRACT_AUTORETRACT

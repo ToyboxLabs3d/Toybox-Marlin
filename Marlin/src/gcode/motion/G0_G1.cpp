@@ -103,7 +103,7 @@ void GcodeSuite::G0_G1(TERN_(HAS_FAST_MOVES, const bool fast_move/*=false*/)) {
           
           #ifdef TBOX_ADV_AUTORETRACT
           if(fwretract.in_advanced_autoretract_mode()){
-            // SERIAL_ECHOLNPGM("G0_G1() e_only move. clamping");
+            SERIAL_ECHOLNPGM("G0_G1() e_only move. clamping");
             fwretract.clamp_move();
             need_to_track = false;
           } else 

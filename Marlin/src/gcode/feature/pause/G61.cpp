@@ -70,7 +70,6 @@ void GcodeSuite::G61(int8_t slot/*=-1*/) {
     SERIAL_ECHOLNPGM("Restoring motion E to ", (motion_e), " from current_position.e ", \
         current_position.e, " new planner e pos (modifiers unapplied): ", (planner_e), \
         " current value (modifiers applied): ", planner.get_axis_position_mm(E_AXIS)); \
-    GcodeSuite::M209_report();\
     current_position.e = (motion_e); \
     planner.set_e_position_mm(planner_e); \
     SERIAL_ECHOLNPGM("Restored motion E to current_position.e ", \
@@ -84,6 +83,9 @@ void GcodeSuite::G61(int8_t slot/*=-1*/) {
 
   // No saved position? No axes being restored?
   if (!did_save_position[slot]) return;
+
+  SERIAL_ECHOLNPGM(STR_RESTORING_POSITION, slot);
+  GcodeSuite::M209_report();
 
 
   const bool restore_feedrate = parser.boolval('Q');
@@ -135,6 +137,7 @@ void GcodeSuite::G61(int8_t slot/*=-1*/) {
     // Just set E to the saved position without moving it
     TERN_(HAS_EXTRUDERS, SYNC_E(stored_position[slot].e, stored_planner_e_position_mm[slot]));
     report_current_position();
+    GcodeSuite::M209_report();
     return;
   }
 
@@ -164,6 +167,7 @@ void GcodeSuite::G61(int8_t slot/*=-1*/) {
   DEBUG_EOL();
 
   report_current_position();
+  GcodeSuite::M209_report();
 }
 
 #endif // SAVED_POSITIONS
