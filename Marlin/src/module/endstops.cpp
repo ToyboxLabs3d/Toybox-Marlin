@@ -68,6 +68,9 @@
 #define DEBUG_OUT ALL(USE_SENSORLESS, DEBUG_LEVELING_FEATURE)
 #include "../core/debug_out.h"
 
+#ifdef ENV_ALPHA4
+#include "../HAL/HC32/cs1237.h"
+#endif
 Endstops endstops;
 
 // private:
@@ -518,7 +521,13 @@ void __O2 Endstops::report_states() {
     print_es_state(probe_switch_activated(), F(STR_PROBE_EN));
   #endif
   #if USE_Z_MIN_PROBE
-    print_es_state(PROBE_TRIGGERED(), F(STR_Z_PROBE));
+    #if Z_PROBE_CS1237
+      cs1237.endstop_report_flg = 1;
+      print_es_state(PROBE_TRIGGERED(), F(STR_Z_PROBE));
+      cs1237.endstop_report_flg = 0;
+    #else
+      print_es_state(PROBE_TRIGGERED(), F(STR_Z_PROBE));
+    #endif    
   #endif
   #if USE_CALIBRATION
     print_es_state(READ(CALIBRATION_PIN) != CALIBRATION_PIN_INVERTING, F(STR_CALIBRATION));
@@ -555,6 +564,9 @@ void Endstops::update() {
   #define _ES_PIN(A,M) A##_##M##_PIN
   #define _ES_HIT(A,M) A##_##M##_ENDSTOP_HIT_STATE
   #define UPDATE_LIVE_STATE(AXIS, MINMAX) SET_BIT_TO(live_state, ES_ENUM(AXIS, MINMAX), (READ_ENDSTOP(_ES_PIN(AXIS, MINMAX)) == _ES_HIT(AXIS, MINMAX)))
+  #ifdef ENV_ALPHA4
+  #define UPDATE_LIVE_STATE_CS1237(AXIS, MINMAX) SET_BIT_TO(live_state, ES_ENUM(AXIS, MINMAX), (cs1237.trigger() == _ES_HIT(AXIS, MINMAX)))
+  #endif
   #define COPY_LIVE_STATE(SRC_BIT, DST_BIT) SET_BIT_TO(live_state, DST_BIT, TEST(live_state, SRC_BIT))
 
   #if ENABLED(G38_PROBE_TARGET)
@@ -669,7 +681,14 @@ void Endstops::update() {
   #if HAS_REAL_BED_PROBE
     // When closing the gap check the enabled probe
     if (probe_switch_activated())
-      UPDATE_LIVE_STATE(Z, TERN(USE_Z_MIN_PROBE, MIN_PROBE, MIN));
+    {
+      #if Z_PROBE_CS1237
+        UPDATE_LIVE_STATE_CS1237(Z, TERN(USE_Z_MIN_PROBE, MIN_PROBE, MIN)); 
+      #else
+        UPDATE_LIVE_STATE(Z, TERN(USE_Z_MIN_PROBE, MIN_PROBE, MIN));
+      #endif
+    }
+  
   #endif
 
   #if USE_Z_MAX

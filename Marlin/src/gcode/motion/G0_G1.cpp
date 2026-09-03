@@ -47,6 +47,12 @@ extern xyze_pos_t destination;
 
 /**
  * G0, G1: Coordinated movement of X Y Z E axes
+ * 
+ * Toybox Alex: Additional params:
+ * L min desired X move amount (always absolute, takes precedence over calculated/given abs position, )
+ * M min desired Y move amount (always absolute, takes precedence over calculated/given abs position, )
+ * N min desired Z move amount (always absolute, takes precedence over calculated/given abs position, )
+ * S moves are safe (skip if not homed, clamp to safe range otherwise)
  */
 void GcodeSuite::G0_G1(TERN_(HAS_FAST_MOVES, const bool fast_move/*=false*/)) {
   if (!MOTION_CONDITIONS) return;
@@ -78,28 +84,102 @@ void GcodeSuite::G0_G1(TERN_(HAS_FAST_MOVES, const bool fast_move/*=false*/)) {
 
   #if ALL(FWRETRACT, FWRETRACT_AUTORETRACT)
 
+    const float echange = destination.e - current_position.e;
+    const bool is_retract = echange < 0.0f;
+    const bool is_emove = echange != 0.0f;
+    const bool is_only_emove = is_emove && !parser.seen(STR_AXES_MAIN);
+
+    #ifdef TBOX_ADV_AUTORETRACT
+    bool need_to_track = is_emove;
+    #endif
+
     if (MIN_AUTORETRACT <= MAX_AUTORETRACT) {
       // When M209 Autoretract is enabled, convert E-only moves to firmware retract/recover moves
-      if (fwretract.autoretract_enabled && parser.seen_test('E')
-        && !parser.seen(STR_AXES_MAIN)
-      ) {
-        const float echange = destination.e - current_position.e;
-        // Is this a retract or recover move?
-        if (WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT) && fwretract.retracted[active_extruder] == (echange > 0.0)) {
-          current_position.e = destination.e;       // Hide a G1-based retract/recover from calculations
-          sync_plan_position_e();                   // AND from the planner
-          return fwretract.retract(echange < 0.0);  // Firmware-based retract/recover (double-retract ignored)
-        }
-      }
+      if (fwretract.autoretract_enabled && is_only_emove) {
+        // Handle E-only moves
+
+        if ( WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT)) {
+          // E-only move, handled by (advanced) autoretract.
+          
+          #ifdef TBOX_ADV_AUTORETRACT
+          if(fwretract.in_advanced_autoretract_mode()){
+            SERIAL_ECHOLNPGM("G0_G1() e_only move. clamping");
+            fwretract.clamp_move();
+            need_to_track = false;
+          } else 
+          #endif
+          {
+            current_position.e = destination.e;       // Hide a G1-based retract/recover from calculations
+            sync_plan_position_e();                   // AND from the planner
+            // SERIAL_ECHOLNPGM("G0_G1() converting to G10/G11. is_retract: ", AS_DIGIT(is_retract), " echange: ", echange);
+            fwretract.retract(is_retract); // convert to G10/G11
+            return;
+          }
+
+
+        } 
+      } 
+      #ifdef TBOX_ADV_AUTORETRACT
+      else if (fwretract.in_advanced_autoretract_mode() && is_emove && is_retract && WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT)){
+        // SERIAL_ECHOLNPGM("G0_G1() e_move but not e_only_move retract move. clamping");
+        fwretract.clamp_move();
+        need_to_track = false;
+      } 
+      #endif
     }
+    
+    #ifdef TBOX_ADV_AUTORETRACT
+      if(need_to_track){
+        fwretract.track_change(echange);
+      }
+    #endif
 
   #endif // FWRETRACT
 
   #if ENABLED(TOYBOX_FAST_CMDS)
+    // FIXME (Toybox Alex): Do these stop running move commands invalidate the current position? 
+    // We already set the destination, but we're not applying it, and it will probably be overwritten
+    // later.
     if(stop_running_move) {
       return;
     }
   #endif
+
+  // -- Toybox Alex: min move and safe move feature
+
+  const bool safe_mode = parser.seen('S'); // don't move if not homed, clamp to safe range (no grinding)
+  const char axes[] = { 'X', 'Y', 'Z'};
+  const char min_move_flags[] = { 'L', 'M', 'N'}; // minimum move deltas (can be positive or negative), will override the X,Y,Z flags if needed.
+  
+  for (uint8_t i = 0; i < COUNT(axes); i++) {
+    const bool seen_min_move = parser.seenval(min_move_flags[i]);
+    if(!seen_min_move && !parser.seen(axes[i])) {
+      continue; 
+    }
+    if (seen_min_move){
+      const float min_move = parser.value_linear_units();
+      if(!safe_mode) {
+        SERIAL_ECHOLNPGM("Error: G0/G1 min move feature requires S parameter to be set. Ignoring min move for axis ", C(axes[i]));
+        continue;
+      }
+      if ((min_move > 0.0f && (destination[i] - current_position[i]) < min_move) 
+          || (min_move < 0.0f && (destination[i] - current_position[i]) > min_move)) {
+        destination[i] = current_position[i] + min_move;
+      }
+    }
+    if (safe_mode){
+      #if !ENABLED(MAX_SOFTWARE_ENDSTOPS) || !ENABLED(MIN_SOFTWARE_ENDSTOPS)
+        SERIAL_ECHOLNPGM("Error: G0/G1 safe move feature requires software endstops to be enabled. Ignoring safe move for axis ", C(axes[i]));
+        destination[i] = current_position[i];
+      #else
+        // Move should be clamped by software endstops elsewhere. We just need to make sure the axis is homed.
+        if (!axis_was_homed((AxisEnum)i)) {
+          SERIAL_ECHOLNPGM("Warning: G0/G1 safe move feature requires axis ", C(axes[i]), " to be homed. Ignoring safe move for this axis.");
+          destination[i] = current_position[i];
+        }
+      #endif
+    }
+  }
 
   #if ANY(IS_SCARA, POLAR)
     fast_move ? prepare_fast_move_to_destination() : prepare_line_to_destination();

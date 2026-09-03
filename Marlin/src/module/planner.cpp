@@ -1830,6 +1830,18 @@ bool Planner::_populate_block(
   , float &minimum_planner_speed_sqr
 ) {
   xyze_long_t dist = target - position;
+  if(dist.e < 0) {
+    SERIAL_ECHOLNPGM("Backwards E move: ", dist.e, " steps. ", double(dist.e) / settings.axis_steps_per_mm[E_AXIS_N(extruder)], " mm ----------------------------------------------------------------------------------------------");
+    // fwretract.M209_report();
+  } else if(dist.e && !dist.x && !dist.y && !dist.z) {
+    SERIAL_ECHOLNPGM("Pure E move: ", dist.e, " steps. ", double(dist.e) / settings.axis_steps_per_mm[E_AXIS_N(extruder)], " mm ------------------------------------------------------------------------------------------------");
+    // fwretract.M209_report();
+  }
+  // hella verbose. debugging only
+  else if(dist.e){
+    // SERIAL_ECHOLNPGM("E move: ", dist.e, " steps. ", double(dist.e) / settings.axis_steps_per_mm[E_AXIS_N(extruder)], " mm ------------------------------------------------------------------------------------------------");
+    // fwretract.M209_report();
+  }
 
   /* <-- add a slash to enable
     SERIAL_ECHOLNPGM(

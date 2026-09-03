@@ -30,6 +30,10 @@
 #include "../../feature/bedlevel/bedlevel.h"
 #include "../../lcd/marlinui.h"
 
+#ifdef ENV_ALPHA4
+#include "../../module/endstops.h"
+#endif
+
 #if HAS_PTC
   #include "../../feature/probe_temp_comp.h"
 #endif
@@ -38,6 +42,10 @@
   #define VERBOSE_SINGLE_PROBE
 #endif
 
+#ifdef ENV_ALPHA4
+// 添加 CS1237 头文件（与 G29 一致）
+#include "../../HAL/HC32/cs1237.h"
+#endif
 /**
  * G30: Do a single Z probe at the given XY (default: current)
  *
@@ -60,7 +68,12 @@ void GcodeSuite::G30() {
   probe.use_probing_tool();
 
   if (probe.can_reach(probepos)) {
-
+#ifdef ENV_ALPHA4
+    // ========== 加入 CS1237 初始化 ==========
+    cs1237.leveling_flg = 1;
+    cs1237.set_zero();
+    // =======================================
+#endif
     // Disable leveling so the planner won't mess with us
     TERN_(HAS_LEVELING, set_bed_leveling_enabled(false));
 
@@ -77,7 +90,37 @@ void GcodeSuite::G30() {
     TERN_(HAS_PTC, ptc.set_enabled(parser.boolval('C', true)));
 
     // Probe the bed, optionally raise, and return the measured height
+    //const float measured_z = probe.probe_at_point(probepos, raise_after);
+    #ifdef ENV_ALPHA4
+    float measured_z;
+
+    // 1. 部署探针（启用限位信号）
+    if (probe.deploy()) {
+      measured_z = NAN;
+    } else {
+      // 2. 临时关闭软限位，让 Z 轴可以移动到触发点（往往在 Z=0 以下）
+      TemporaryGlobalEndstopsState unlock(false);
+
+      // 3. 计算目标 Z 坐标（与原生 run_z_probe 一致）
+      float zoffs = -probe.offset.z;
+      #if HAS_HOTEND_OFFSET
+        zoffs += hotend_offset[active_extruder].z;
+      #endif
+      const float targetZ = zoffs + Z_PROBE_LOW_POINT;
+
+      // 4. 执行单次慢速下探
+      do_blocking_move_to_z(targetZ, MMM_TO_MMS(Z_PROBE_FEEDRATE_SLOW));
+
+      // 5. 根据触发状态计算实际高度
+      measured_z = PROBE_TRIGGERED() ? current_position.z + probe.offset.z : NAN;
+
+    }
+    // ========== 清除 CS1237 标志 ==========
+    cs1237.leveling_flg = 0;
+    // =======================================
+    #else
     const float measured_z = probe.probe_at_point(probepos, raise_after);
+    #endif
 
     // After probing always re-enable Probe Temperature Compensation
     TERN_(HAS_PTC, ptc.set_enabled(true));
@@ -100,7 +143,7 @@ void GcodeSuite::G30() {
     // Move the nozzle to the position of the probe
     do_blocking_move_to(probepos);
 
-    if (raise_after == PROBE_PT_STOW)
+    if (raise_after == PROBE_PT_STOW) 
       probe.move_z_after_probing();
 
     report_current_position();

@@ -269,6 +269,12 @@
   #include "feature/rs485.h"
 #endif
 
+#ifdef ENV_ALPHA4
+#include "HAL/HC32/cs1237.h"
+#endif
+
+uint32_t cstick=0;
+
 PGMSTR(M112_KILL_STR, "M112 Shutdown");
 
 MarlinState marlin_state = MarlinState::MF_INITIALIZING;
@@ -768,7 +774,11 @@ void idle(const bool no_stepper_sleep/*=false*/) {
   #ifdef MAX7219_DEBUG_PROFILE
     CodeProfiler idle_profiler;
   #endif
-
+#ifdef ENV_ALPHA4
+  if((cs1237.homing_flg == 1)||(cs1237.leveling_flg == 1)||(cs1237.endstop_report_flg == 1)){
+    cs1237.calc_trigger_state();
+  }
+#endif
   #if ENABLED(MARLIN_DEV_MODE)
     static uint16_t idle_depth = 0;
     if (++idle_depth > 5) SERIAL_ECHOLNPGM("idle() call depth: ", idle_depth);
@@ -1147,7 +1157,7 @@ inline void tmc_standby_setup() {
  *  - Set Marlin to RUNNING State
  */
 void setup() {
-  #if MB(ESP32_HC_V1_5) || MB(ESP32_HC_V4_1)
+  #if MB(ESP32_HC_V1_5) || MB(ESP32_HC_V2_4) || MB(ESP32_HC_V4_1)
   PORT_Unlock();
   M4_PORT->PCCR   = 0XC000u;
   PORT_Lock();
@@ -1178,7 +1188,7 @@ void setup() {
   #endif
   #define SETUP_RUN(C) do{ SETUP_LOG(STRINGIFY(C)); C; }while(0)
 
-  #if MB(ESP32_HC_V1_5) || MB(ESP32_HC_V4_1)
+  #if MB(ESP32_HC_V1_5) || MB(ESP32_HC_V2_4) || MB(ESP32_HC_V4_1)
   stc_port_init_t Tx_pstcPortInit = {
     .enPinMode = Pin_Mode_Out,
     .enLatch = Disable,        
@@ -1722,6 +1732,12 @@ void setup() {
   SETUP_LOG("setup() completed.");
 
   TERN_(MARLIN_TEST_BUILD, runStartupTests());
+
+  #ifdef ENV_ALPHA4
+  //HC_TIM6_init();
+  cs1237.func_init();
+  cstick = millis();
+  #endif
 }
 
 /**

@@ -27,6 +27,7 @@
 #include "../../gcode.h"
 #include "../../../module/motion.h"
 #include "../../../module/temperature.h"
+#include "../../../module/planner.h"
 
 #define DEBUG_OUT ENABLED(SAVED_POSITIONS_DEBUG)
 #include "../../../core/debug_out.h"
@@ -102,6 +103,16 @@ void GcodeSuite::G60() {
   // G60 S
   stored_position[slot] = current_position;
 
+
+  // Toybox Alex: The original code didn't handle the case where the current retract was non-zero correctly.
+  // We're saving the current planner E position. We have to unapply the modifiers since they will
+  // be automatically reapplied when restored later.
+  xyze_pos_t planner_pos;
+  planner_pos.reset();
+  planner_pos.e = planner.get_axis_position_mm(E_AXIS);
+  planner.unapply_modifiers(planner_pos);
+
+  stored_planner_e_position_mm[slot] = planner_pos.e;
   stored_axis_relative[slot] = gcode.axis_relative;
   stored_feedrate[slot] = feedrate_mm_s;
   stored_hot_end_temperature[slot] = thermalManager.degTargetHotend(0);
@@ -111,7 +122,13 @@ void GcodeSuite::G60() {
   #endif
 
   did_save_position.set(slot);
+  SERIAL_ECHOLNPGM("Save E position: current_position.e ", current_position.e, " planner e pos: ", planner.get_axis_position_mm(E_AXIS));
+  SERIAL_ECHOLNPGM("planner positions: ", planner.get_axis_position_mm(X_AXIS), ", ", 
+    planner.get_axis_position_mm(Y_AXIS), ", ", planner.get_axis_position_mm(Z_AXIS), 
+    ", ", planner.get_axis_position_mm(E_AXIS));
+  SERIAL_ECHOLNPGM("Stored planner e pos: ", stored_planner_e_position_mm[slot]);
   report_stored_position(slot);
+  GcodeSuite::M209_report();
 }
 
 #endif // SAVED_POSITIONS

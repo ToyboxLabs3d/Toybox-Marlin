@@ -318,7 +318,7 @@ int16_t RTS::receiveData() {
         if (databuf[frame_index] == FHTWO) frame_index++; else frame_index = 0;
         continue;
       }
-      // 长度
+      // 长度 (Length)
       else if (frame_index == 2) {
         framelen = databuf[frame_index];
         frame_index++;

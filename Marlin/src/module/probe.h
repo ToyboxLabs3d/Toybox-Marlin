@@ -58,7 +58,9 @@
   #define PROBE_HIT_STATE Z_MIN_ENDSTOP_HIT_STATE
 #endif
 #define PROBE_TRIGGERED() (PROBE_READ() == PROBE_HIT_STATE)
-
+#ifdef ENV_ALPHA4
+#define PROBE_TRIGGERED_CS1237() (cs1237_trigger() == PROBE_HIT_STATE)
+#endif
 // In BLTOUCH HS mode, the probe travels in a deployed state.
 #define Z_TWEEN_SAFE_CLEARANCE SUM_TERN(BLTOUCH, Z_CLEARANCE_BETWEEN_PROBES, bltouch.z_extra_clearance())
 
@@ -195,6 +197,11 @@ public:
     ) {
       return probe_at_point(pos.x, pos.y, raise_after, verbose_level, probe_relative, sanity_check, z_min_point, z_clearance, raise_after_is_rel);
     }
+
+    #ifdef TOYBOX_PROBE_FUDGING
+      static void set_z_offset_fudge_factor(const float f) { _z_offset_fudge_factor = f; }
+      static float get_z_offset_fudge_factor() { return _z_offset_fudge_factor; }
+    #endif
 
   #else // !HAS_BED_PROBE
 
@@ -364,6 +371,9 @@ private:
   #if HAS_BED_PROBE
     static bool probe_down_to_z(const_float_t z, const_feedRate_t fr_mm_s);
     static float run_z_probe(const bool sanity_check=true, const_float_t z_min_point=Z_PROBE_LOW_POINT, const_float_t z_clearance=Z_TWEEN_SAFE_CLEARANCE);
+  #endif
+  #ifdef TOYBOX_PROBE_FUDGING
+    static float _z_offset_fudge_factor;
   #endif
 };
 

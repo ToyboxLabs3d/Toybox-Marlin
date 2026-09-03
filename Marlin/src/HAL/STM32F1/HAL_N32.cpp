@@ -412,7 +412,7 @@ void ADC_Initial(ADC_Module* NS_ADCx) {
   ADC_ConfigRegularChannel(NS_ADCx, ADC2_Channel_05_PC4, 2, ADC_SAMP_TIME_55CYCLES5);
   ADC_ConfigRegularChannel(NS_ADCx, ADC2_Channel_12_PC5, 1, ADC_SAMP_TIME_55CYCLES5);
 
-  /** 使能ADC DMA */
+  /** 使能ADC DMA (Enable ADC DMA) */
   ADC_EnableDMA(NS_ADCx, 1);
 
   /* Enable ADC */

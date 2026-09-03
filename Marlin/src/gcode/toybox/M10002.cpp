@@ -1,8 +1,11 @@
 #include "../gcode.h"
 
-#ifdef ENV_ALPHA3
+#if defined(ENV_ALPHA3) 
     #define BUILD_NUMBER 10
     #define VERSION_STRING "1.0.1"
+#elif defined(ENV_ALPHA4)
+    #define BUILD_NUMBER 215
+    #define VERSION_STRING "1.0.0"
 #elif defined(ENV_CHARLIE)
     #define BUILD_NUMBER 101
     #define VERSION_STRING "1.0.0"
@@ -12,5 +15,5 @@
 #endif
 
 void GcodeSuite::M10002(){
-  SERIAL_ECHO_MSG("Toybox-marlin BUILD: ", BUILD_NUMBER, " VERSION: ", VERSION_STRING);
+  SERIAL_ECHO_MSG("Toybox-marlin BUILD: " STRINGIFY(BUILD_NUMBER) " VERSION: " VERSION_STRING);
 }

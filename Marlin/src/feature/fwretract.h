@@ -28,7 +28,7 @@
 #include "../inc/MarlinConfigPre.h"
 
 typedef struct {
-       float retract_length;                      // M207 S - G10 Retract length
+       float retract_length = RETRACT_LENGTH;      // M207 S - G10 Retract length
   feedRate_t retract_feedrate_mm_s;               // M207 F - G10 Retract feedrate
        float retract_zraise,                      // M207 Z - G10 Retract hop size
              retract_recover_extra;               // M208 S - G11 Recover length
@@ -40,13 +40,36 @@ typedef struct {
 
 #if ENABLED(FWRETRACT)
 
+#ifdef TBOX_ADV_AUTORETRACT
+enum class AutoRetractMode : uint8_t {
+  OFF,
+  NORMAL,
+  ADVANCED,
+  NUM_MODES
+};
+#endif
+
 class FWRetract {
 private:
   #if HAS_MULTI_EXTRUDER
     static Flags<EXTRUDERS> retracted_swap;        // Which extruders are swap-retracted
   #endif
+  #ifdef TBOX_ADV_AUTORETRACT
+    static float retracted_amnt; // actual amount retracted. differnent from current_retract[active_extruder] which is used for planner coordinate transforms or whatever.
+    static AutoRetractMode autoretract_mode;
+    static void set_autoretract_mode(const AutoRetractMode mode);
+  #endif
+
 
 public:
+  #ifdef TBOX_ADV_AUTORETRACT
+   static bool in_advanced_autoretract_mode() {
+     return autoretract_mode == AutoRetractMode::ADVANCED;
+   }
+   static void clamp_move();
+   static void track_change(const float e_move); // ie: fake
+   static void g10_g11(const bool retracting);
+  #endif
   static fwretract_settings_t settings;
 
   #if ENABLED(FWRETRACT_AUTORETRACT)
@@ -59,7 +82,14 @@ public:
   static float current_retract[EXTRUDERS],         // Retract value used by planner
                current_hop;                        // Hop value used by planner
 
-  FWRetract() { reset(); }
+  FWRetract() { 
+    reset();
+    #ifdef TBOX_ADV_AUTORETRACT
+      retracted_amnt = 0.0f;
+    #endif
+    retracted.reset();
+    memset(current_retract, 0, sizeof(current_retract));
+  }
 
   static void reset();
 
@@ -72,7 +102,9 @@ public:
     #endif
   }
 
-  static void retract(const bool retracting E_OPTARG(bool swapping=false));
+  static void retract(const bool retracting
+    E_OPTARG(bool swapping=false));
+    
 
   static void M207_report();
   static void M207();

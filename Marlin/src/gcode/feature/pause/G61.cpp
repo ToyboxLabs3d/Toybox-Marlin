@@ -54,12 +54,27 @@
  *   W<offset> - Restore 9th axis, applying the given offset (default 0)
  *
  *   If no axes are specified then all axes are restored.
+ * 
+ *  Toybox Alex: Additional params:
+ *  Q - Restore feedrate
+ *  R - Restore axis relative mode
+ *  T - Restore hot end temperature
+ *  U - Restore fan speed. Note: If if the fan auto-off temperature was set, this will not restore it.
+ *  V - Restore bed temperature
  */
 void GcodeSuite::G61(int8_t slot/*=-1*/) {
 
   if (slot < 0) slot = parser.byteval('S');
 
-  #define SYNC_E(E) planner.set_e_position_mm(current_position.e = (E))
+  #define SYNC_E(motion_e, planner_e) do { \
+    SERIAL_ECHOLNPGM("Restoring motion E to ", (motion_e), " from current_position.e ", \
+        current_position.e, " new planner e pos (modifiers unapplied): ", (planner_e), \
+        " current value (modifiers applied): ", planner.get_axis_position_mm(E_AXIS)); \
+    current_position.e = (motion_e); \
+    planner.set_e_position_mm(planner_e); \
+    SERIAL_ECHOLNPGM("Restored motion E to current_position.e ", \
+        current_position.e, " planner e pos to ", planner.get_axis_position_mm(E_AXIS)); \
+  } while(0)
 
   if (SAVED_POSITIONS < 256 && slot >= SAVED_POSITIONS) {
     SERIAL_ERROR_MSG(STR_INVALID_POS_SLOT STRINGIFY(SAVED_POSITIONS));
@@ -68,6 +83,9 @@ void GcodeSuite::G61(int8_t slot/*=-1*/) {
 
   // No saved position? No axes being restored?
   if (!did_save_position[slot]) return;
+
+  SERIAL_ECHOLNPGM(STR_RESTORING_POSITION, slot);
+  GcodeSuite::M209_report();
 
 
   const bool restore_feedrate = parser.boolval('Q');
@@ -117,8 +135,9 @@ void GcodeSuite::G61(int8_t slot/*=-1*/) {
     // Move to the saved position, all axes except E
     do_blocking_move_to(stored_position[slot], feedrate_mm_s);
     // Just set E to the saved position without moving it
-    TERN_(HAS_EXTRUDERS, SYNC_E(stored_position[slot].e));
+    TERN_(HAS_EXTRUDERS, SYNC_E(stored_position[slot].e, stored_planner_e_position_mm[slot]));
     report_current_position();
+    GcodeSuite::M209_report();
     return;
   }
 
@@ -141,13 +160,14 @@ void GcodeSuite::G61(int8_t slot/*=-1*/) {
     if (parser.seen('E')) {
       epos += parser.value_axis_units(E_AXIS);
       DEBUG_ECHOPGM(" E", epos);
-      SYNC_E(epos);
+      SYNC_E(epos, stored_planner_e_position_mm[slot]);
     }
   #endif
 
   DEBUG_EOL();
 
   report_current_position();
+  GcodeSuite::M209_report();
 }
 
 #endif // SAVED_POSITIONS

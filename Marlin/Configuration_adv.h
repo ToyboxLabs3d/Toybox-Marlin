@@ -309,7 +309,7 @@
  */
 #if ALL(HAS_HOTEND, THERMAL_PROTECTION_HOTENDS)
   #define THERMAL_PROTECTION_PERIOD        40 // (seconds)
-  #ifdef ENV_ALPHA3
+  #if defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
     #define THERMAL_PROTECTION_HYSTERESIS     4 // (°C
 #elif defined(ENV_CHARLIE)
   #define THERMAL_PROTECTION_HYSTERESIS     20//4 // (°C)
@@ -335,7 +335,7 @@
    * and/or decrease WATCH_TEMP_INCREASE. WATCH_TEMP_INCREASE should not be set
    * below 2.
    */
-#ifdef ENV_ALPHA3
+#if defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
   #define WATCH_TEMP_PERIOD  40               // (seconds)
 #elif defined(ENV_CHARLIE)
   #define WATCH_TEMP_PERIOD  60               // (seconds)
@@ -702,7 +702,7 @@
 
 #ifdef ENV_CHARLIE
 #define E0_AUTO_FAN_PIN PC4
-#elif defined(ENV_ALPHA3)
+#elif defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
 #define E0_AUTO_FAN_PIN PA8
 #endif
 
@@ -1227,7 +1227,7 @@
  *
  * Tune with M593 D<factor> F<frequency>
  */
-#ifdef ENV_ALPHA3
+#if defined(ENV_ALPHA3) || defined(ENV_ALPHA4)
   #define INPUT_SHAPING_X
   #define INPUT_SHAPING_Y
   #define INPUT_SHAPING_Z
@@ -2365,20 +2365,25 @@
 #define LIN_ADVANCE
 
 #if ENABLED(LIN_ADVANCE)
-#ifdef ENV_CHARLIE
-
-  #if ENABLED(DISTINCT_E_FACTORS)
-    #define ADVANCE_K { 0.03 }    // (mm) Compression length per 1mm/s extruder speed, per extruder
-  #else
-    #define ADVANCE_K 0.03        // (mm) Compression length applying to all extruders
-  #endif
+  #ifdef ENV_CHARLIE
+    #if ENABLED(DISTINCT_E_FACTORS)
+      #define ADVANCE_K { 0.03 }    // (mm) Compression length per 1mm/s extruder speed, per extruder
+    #else
+      #define ADVANCE_K 0.03        // (mm) Compression length applying to all extruders
+    #endif
+  #elif defined(ENV_ALPHA4)
+    #if ENABLED(DISTINCT_E_FACTORS)
+      #define ADVANCE_K { 0.03 }
+    #else
+      #define ADVANCE_K 0.02
+    #endif  
   #else 
     #if ENABLED(DISTINCT_E_FACTORS)
-    #define ADVANCE_K { 0.03 }    // (mm) Compression length per 1mm/s extruder speed, per extruder
-  #else
-    #define ADVANCE_K 0.03        // (mm) Compression length applying to all extruders
+      #define ADVANCE_K { 0.03 }    // (mm) Compression length per 1mm/s extruder speed, per extruder
+    #else
+      #define ADVANCE_K 0.03        // (mm) Compression length applying to all extruders
+    #endif
   #endif
-#endif
 
   //#define ADVANCE_K_EXTRA       // Add a second linear advance constant, configurable with M900 L.
   //#define LA_DEBUG              // Print debug information to serial during operation. Disable for production use.
@@ -2401,6 +2406,11 @@
  * For example, after homing a rotational axis the Z probe might not be perpendicular to the bed.
  * Choose values the orient the bed horizontally and the Z-probe vertically.
  */
+#ifdef ENV_ALPHA4
+  #define SAFE_BED_LEVELING_START_X 5.0
+  #define SAFE_BED_LEVELING_START_Y 5.0
+  #define SAFE_BED_LEVELING_START_Z 5.0
+#endif
 //#define SAFE_BED_LEVELING_START_X 0.0
 //#define SAFE_BED_LEVELING_START_Y 0.0
 //#define SAFE_BED_LEVELING_START_Z 0.0
@@ -2479,6 +2489,9 @@
 
 #endif
 
+#ifdef ENV_ALPHA4
+  #define TOYBOX_PROBE_FUDGING
+#endif
 // @section probes
 
 /**
@@ -2552,7 +2565,7 @@
 //
 // G60/G61 Position Save and Return
 //
-#define SAVED_POSITIONS 1         // Each saved position slot costs 12 bytes
+#define SAVED_POSITIONS 2        // Each saved position slot costs 12 bytes
 
 //
 // G2/G3 Arc Support
@@ -2671,6 +2684,8 @@
 
 // The ASCII buffer for serial input
 #define MAX_CMD_SIZE 96
+// WARNING (Alex Toybox): The ESP32 firmware assumes this is a certain size. 
+// Making this to small will probably cause a bunch of resends or other serial issues.
 #define BUFSIZE 11
 
 // Transmission to Host Buffer Size
@@ -2803,23 +2818,62 @@
  *
  * Note that M207 / M208 / M209 settings are saved to EEPROM.
  */
-#define FWRETRACT
-#if ENABLED(FWRETRACT)
-  #define FWRETRACT_AUTORETRACT             // Override slicer retractions
-  #if ENABLED(FWRETRACT_AUTORETRACT)
-    #define MIN_AUTORETRACT             0.1 // (mm) Don't convert E moves under this length
-    #define MAX_AUTORETRACT            10.0 // (mm) Don't convert E moves over this length
+
+#ifdef ENV_ALPHA4
+
+  #define FWRETRACT
+  
+  #if ENABLED(FWRETRACT)
+    #define FWRETRACT_AUTORETRACT             // Override slicer retractions
+    // Toybox Advanced Auto-retract
+    #define TBOX_ADV_AUTORETRACT
+    #if ENABLED(TBOX_ADV_AUTORETRACT)
+      #define TBOX_ADV_AUTORETRACT_MAX_PERMITED_RETRACT_LENGTH 1.4
+      #define TBOX_ADV_AUTORETRACT_MAX_AMNT_CONSIDERED_RETRACTED 3.0
+      #define TBOX_ADV_AUTORETRACT_ON_DEFAULT
+    #endif  
+    #if ENABLED(FWRETRACT_AUTORETRACT)
+      #define MIN_AUTORETRACT             0.0 // (mm) Don't convert E moves under this length
+      #define MAX_AUTORETRACT            1000.0 // (mm) Don't convert E moves over this length
+    #endif
+
+    // Toybox Alex: This is the same value as what we use for slicing for the A4. The A3 is sliced with a 1mm retract. 
+    #define RETRACT_LENGTH               0.4  // (mm) Default retract length (positive value)
+
+    #define RETRACT_LENGTH_SWAP          13   // (mm) Default swap retract length (positive value)
+    #define RETRACT_FEEDRATE             45   // (mm/s) Default feedrate for retracting
+    #define RETRACT_ZRAISE                0   // (mm) Default retract Z-raise
+    #define RETRACT_RECOVER_LENGTH        0   // (mm) Default additional recover length (added to retract length on recover)
+    #define RETRACT_RECOVER_LENGTH_SWAP   0   // (mm) Default additional swap recover length (added to retract length on recover from toolchange)
+    #define RETRACT_RECOVER_FEEDRATE      8   // (mm/s) Default feedrate for recovering from retraction
+    #define RETRACT_RECOVER_FEEDRATE_SWAP 8   // (mm/s) Default feedrate for recovering from swap retraction
+    #if ENABLED(MIXING_EXTRUDER)
+      //#define RETRACT_SYNC_MIXING           // Retract and restore all mixing steppers simultaneously
+    #endif
   #endif
-  #define RETRACT_LENGTH                3   // (mm) Default retract length (positive value)
-  #define RETRACT_LENGTH_SWAP          13   // (mm) Default swap retract length (positive value)
-  #define RETRACT_FEEDRATE             45   // (mm/s) Default feedrate for retracting
-  #define RETRACT_ZRAISE                0   // (mm) Default retract Z-raise
-  #define RETRACT_RECOVER_LENGTH        0   // (mm) Default additional recover length (added to retract length on recover)
-  #define RETRACT_RECOVER_LENGTH_SWAP   0   // (mm) Default additional swap recover length (added to retract length on recover from toolchange)
-  #define RETRACT_RECOVER_FEEDRATE      8   // (mm/s) Default feedrate for recovering from retraction
-  #define RETRACT_RECOVER_FEEDRATE_SWAP 8   // (mm/s) Default feedrate for recovering from swap retraction
-  #if ENABLED(MIXING_EXTRUDER)
-    //#define RETRACT_SYNC_MIXING           // Retract and restore all mixing steppers simultaneously
+
+#else
+
+  #define FWRETRACT
+
+
+  #if ENABLED(FWRETRACT)
+    #define FWRETRACT_AUTORETRACT             // Override slicer retractions
+    #if ENABLED(FWRETRACT_AUTORETRACT)
+      #define MIN_AUTORETRACT             0.1 // (mm) Don't convert E moves under this length
+      #define MAX_AUTORETRACT            10.0 // (mm) Don't convert E moves over this length
+    #endif
+    #define RETRACT_LENGTH               3     // (mm) Default retract length (positive value)
+    #define RETRACT_LENGTH_SWAP          13   // (mm) Default swap retract length (positive value)
+    #define RETRACT_FEEDRATE             45   // (mm/s) Default feedrate for retracting
+    #define RETRACT_ZRAISE                0   // (mm) Default retract Z-raise
+    #define RETRACT_RECOVER_LENGTH        0   // (mm) Default additional recover length (added to retract length on recover)
+    #define RETRACT_RECOVER_LENGTH_SWAP   0   // (mm) Default additional swap recover length (added to retract length on recover from toolchange)
+    #define RETRACT_RECOVER_FEEDRATE      8   // (mm/s) Default feedrate for recovering from retraction
+    #define RETRACT_RECOVER_FEEDRATE_SWAP 8   // (mm/s) Default feedrate for recovering from swap retraction
+    #if ENABLED(MIXING_EXTRUDER)
+      //#define RETRACT_SYNC_MIXING           // Retract and restore all mixing steppers simultaneously
+    #endif
   #endif
 #endif
 

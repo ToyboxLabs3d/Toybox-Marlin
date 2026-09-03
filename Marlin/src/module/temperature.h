@@ -884,9 +884,13 @@ class Temperature {
     #if HAS_FAN
 
       static uint8_t fan_speed[FAN_COUNT];
+      static celsius_t fan_off_temperature[FAN_COUNT];
       #define FANS_LOOP(I) for (uint8_t I = 0; I < FAN_COUNT; ++I)
 
       static void set_fan_speed(const uint8_t fan, const uint16_t speed);
+
+      static void set_fan_off_temperature(const uint8_t fan, const celsius_t temp);
+      static void manage_fan_auto_off();
 
       #if ENABLED(REPORT_FAN_CHANGE)
         static void report_fan_speed(const uint8_t fan);

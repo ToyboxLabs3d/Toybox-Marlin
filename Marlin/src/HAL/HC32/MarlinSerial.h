@@ -25,8 +25,8 @@
 #include <drivers/usart/Usart.h>
 
 // Optionally set uart IRQ priority to reduce overflow errors
-//#define UART_RX_IRQ_PRIO 1
-//#define UART_TX_IRQ_PRIO 1
+#define UART_RX_IRQ_PRIO 1
+#define UART_TX_IRQ_PRIO 1
 //#define UART_RX_DMA_IRQ_PRIO 1
 
 struct MarlinSerial : public Usart {

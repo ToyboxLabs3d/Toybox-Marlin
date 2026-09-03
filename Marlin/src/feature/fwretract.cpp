@@ -41,6 +41,10 @@ FWRetract fwretract; // Single instance - this calls the constructor
   #include "mixing.h"
 #endif
 
+#if defined(TBOX_ADV_AUTORETRACT) && HAS_MULTI_EXTRUDER
+  #error "TBOX_ADV_AUTORETRACT is not compatible with multiple extruders"
+#endif
+
 // private:
 
 #if HAS_MULTI_EXTRUDER
@@ -55,13 +59,35 @@ fwretract_settings_t FWRetract::settings;             // M207 S F Z W, M208 S F 
   bool FWRetract::autoretract_enabled;                // M209 S - Autoretract switch
 #endif
 
+#ifdef TBOX_ADV_AUTORETRACT
+  float FWRetract::retracted_amnt = 0.0f;           
+  AutoRetractMode FWRetract::autoretract_mode = 
+  #ifdef TBOX_ADV_AUTORETRACT_ON_DEFAULT
+    AutoRetractMode::ADVANCED;
+  #else
+    AutoRetractMode::OFF; 
+  #endif
+#endif
+
 Flags<EXTRUDERS> FWRetract::retracted;                // Which extruders are currently retracted
 
-float FWRetract::current_retract[EXTRUDERS],          // Retract value used by planner
-      FWRetract::current_hop;
+float FWRetract::current_retract[EXTRUDERS] = {0.0f};          // Retract value used by planner
+float FWRetract::current_hop = 0.0f;
 
 void FWRetract::reset() {
-  TERN_(FWRETRACT_AUTORETRACT, autoretract_enabled = false);
+  #if ENABLED(FWRETRACT_AUTORETRACT)
+    #ifdef TBOX_ADV_AUTORETRACT
+      #ifdef TBOX_ADV_AUTORETRACT_ON_DEFAULT
+        autoretract_enabled = true;
+        autoretract_mode = AutoRetractMode::ADVANCED;
+      #else
+        autoretract_enabled = false;
+        autoretract_mode = AutoRetractMode::OFF;
+      #endif
+    #else
+      autoretract_enabled = false;
+    #endif
+  #endif
   settings.retract_length = RETRACT_LENGTH;
   settings.retract_feedrate_mm_s = RETRACT_FEEDRATE;
   settings.retract_zraise = RETRACT_ZRAISE;
@@ -72,10 +98,15 @@ void FWRetract::reset() {
   settings.swap_retract_recover_feedrate_mm_s = RETRACT_RECOVER_FEEDRATE_SWAP;
   current_hop = 0.0;
 
-  retracted.reset();
-  EXTRUDER_LOOP() {
-    E_TERN_(retracted_swap.clear(e));
-    current_retract[e] = 0.0;
+#ifdef TBOX_ADV_AUTORETRACT
+  if(autoretract_mode != AutoRetractMode::ADVANCED)
+#endif
+  {
+    retracted.reset();
+    EXTRUDER_LOOP() {
+      E_TERN_(retracted_swap.clear(e));
+      current_retract[e] = 0.0;
+    }
   }
 }
 
@@ -89,12 +120,73 @@ void FWRetract::reset() {
  *
  * Note: Auto-retract will apply the set Z hop in addition to any Z hop
  *       included in the G-code. Use M207 Z0 to to prevent double hop.
+ * 
+ * Toybox Alex: In advanced autoretract mode, this is only called from G10/G11.
+ * In advanced autoretract mode, moves are possibly skipped based on current 
+ * retracted_amnt, or clamped.
+ * 
+ * If advanced autoretract is not enabled, this does the same thing as before, 
+ * except the retracted_amnt is still tracked, and the retracted[active_extruder]
+ * flag will still have been possibly set from when we were in advanced autoretract mode.
+ * 
  */
-void FWRetract::retract(const bool retracting E_OPTARG(bool swapping/*=false*/)) {
-  // Prevent two retracts or recovers in a row
-  if (retracted[active_extruder] == retracting) return;
+void FWRetract::retract(const bool retracting E_OPTARG(bool swapping/*=false*/)) 
+{
+  // SERIAL_ECHOLNPGM(">> FWRetract::retract() retracting: ", AS_DIGIT(retracting), 
+  // " retracted_amnt: ", retracted_amnt, 
+  // " current_retract[active_extruder]: ", current_retract[active_extruder], 
+  // " retracted[active_extruder]: ", AS_DIGIT(retracted[active_extruder]));
 
-  // Prevent two swap-retract or recovers in a row
+  #ifdef TBOX_ADV_AUTORETRACT
+    bool next_retracted_state = retracting; 
+    float delta_retracted_amnt = 0.0f;
+
+    if(autoretract_mode == AutoRetractMode::ADVANCED) {
+      // don't G10 retract past RETRACT_LENGTH
+      const float e_move_for_retract = - max(0.0f, RETRACT_LENGTH - retracted_amnt);
+      const float attempted_e_move = retracting ? e_move_for_retract : retracted_amnt;
+
+      const float old_retracted_amnt = retracted_amnt;
+
+      if(retracting && retracted_amnt >= TBOX_ADV_AUTORETRACT_MAX_PERMITED_RETRACT_LENGTH){
+        SERIAL_ECHOLNPGM("Retracted amount super high, pressumably we got into this state while advance-autoretract was off.");
+        return;
+      }
+      retracted_amnt -= attempted_e_move;
+      retracted_amnt = constrain(retracted_amnt, 0.0f, TBOX_ADV_AUTORETRACT_MAX_PERMITED_RETRACT_LENGTH);
+
+      if(retracted_amnt < 0.0001f && retracted_amnt > -0.0001f){
+        // rounding error fix.
+        retracted_amnt = 0.0f;
+      }
+      if(retracted_amnt == 0.0f){
+        next_retracted_state = false;
+      }else {
+        next_retracted_state = true;
+      }
+
+      delta_retracted_amnt = retracted_amnt - old_retracted_amnt;
+
+      if (delta_retracted_amnt < 0.0001f && delta_retracted_amnt > -0.0001f) {
+        retracted[active_extruder] = next_retracted_state;
+        // SERIAL_ECHOLNPGM("delta_retracted_amnt is 0.0f ");
+        // SERIAL_ECHOLNPGM("<< FWRetract::retract() retracting: ", AS_DIGIT(retracting), 
+        //     " retracted_amnt: ", retracted_amnt, 
+        //     " current_retract[active_extruder]: ", current_retract[active_extruder], 
+        //     " retracted[active_extruder]: ", AS_DIGIT(retracted[active_extruder]));
+        return;
+      }
+
+
+    } else
+  #endif
+  {
+    if (retracted[active_extruder] == retracting){
+      // SERIAL_ECHOLNPGM("retracted[active_extruder] == retracting. ignoring.");
+      return;
+    } 
+  }
+
   #if HAS_MULTI_EXTRUDER
     // Allow G10 S1 only after G11
     if (swapping && retracted_swap[active_extruder] == retracting) return;
@@ -121,9 +213,15 @@ void FWRetract::retract(const bool retracting E_OPTARG(bool swapping/*=false*/))
     SERIAL_ECHOLNPGM("current_hop ", current_hop);
   //*/
 
-  const float base_retract = TERN1(RETRACT_SYNC_MIXING, (MIXING_STEPPERS))
-                * (swapping ? settings.swap_retract_length : settings.retract_length);
-
+  #ifdef TBOX_ADV_AUTORETRACT
+    if(!in_advanced_autoretract_mode()){
+      delta_retracted_amnt = TERN1(RETRACT_SYNC_MIXING, (MIXING_STEPPERS))
+      * (swapping ? settings.swap_retract_length : settings.retract_length);
+    }
+  #else
+    const float base_retract = TERN1(RETRACT_SYNC_MIXING, (MIXING_STEPPERS))
+                  * (swapping ? settings.swap_retract_length : settings.retract_length);
+  #endif
   // The current position will be the destination for E and Z moves
   destination = current_position;
 
@@ -135,10 +233,15 @@ void FWRetract::retract(const bool retracting E_OPTARG(bool swapping/*=false*/))
   const feedRate_t fr_max_z = planner.settings.max_feedrate_mm_s[Z_AXIS];
   if (retracting) {
     // Retract by moving from a faux E position back to the current E position
-    current_retract[active_extruder] = base_retract;
-    prepare_internal_move_to_destination(                 // set current from destination
-      MUL_TERN(RETRACT_SYNC_MIXING, settings.retract_feedrate_mm_s, MIXING_STEPPERS)
-    );
+    #ifdef TBOX_ADV_AUTORETRACT
+      current_retract[active_extruder] += delta_retracted_amnt;
+    #else
+      current_retract[active_extruder] = base_retract;
+    #endif
+
+      prepare_internal_move_to_destination(                 // set current from destination
+        MUL_TERN(RETRACT_SYNC_MIXING, settings.retract_feedrate_mm_s, MIXING_STEPPERS)
+      );
 
     // Is a Z hop set, and has the hop not yet been done?
     if (!current_hop && settings.retract_zraise > 0.01f) {  // Apply hop only once
@@ -158,28 +261,44 @@ void FWRetract::retract(const bool retracting E_OPTARG(bool swapping/*=false*/))
     const float extra_recover = swapping ? settings.swap_retract_recover_extra : settings.retract_recover_extra;
     if (extra_recover) {
       current_position.e -= extra_recover;          // Adjust the current E position by the extra amount to recover
-      sync_plan_position_e();                             // Sync the planner position so the extra amount is recovered
+      sync_plan_position_e();                       // Sync the planner position so the extra amount is recovered
     }
 
-    current_retract[active_extruder] = 0;
+    #ifdef TBOX_ADV_AUTORETRACT 
+      current_retract[active_extruder] += delta_retracted_amnt;
+    #else
+      current_retract[active_extruder] = 0;
+    #endif
 
-    // Recover E, set_current_to_destination
-    prepare_internal_move_to_destination(
-      MUL_TERN(RETRACT_SYNC_MIXING, swapping ? settings.swap_retract_recover_feedrate_mm_s : settings.retract_recover_feedrate_mm_s, MIXING_STEPPERS)
-    );
+      prepare_internal_move_to_destination(                 
+        MUL_TERN(RETRACT_SYNC_MIXING, swapping ? settings.swap_retract_recover_feedrate_mm_s : settings.retract_recover_feedrate_mm_s, MIXING_STEPPERS)
+      );
   }
 
   TERN_(RETRACT_SYNC_MIXING, mixer.T(old_mixing_tool));   // Restore original mixing tool
 
-  retracted.set(active_extruder, retracting);             // Active extruder now retracted / recovered
 
+
+  
+  #ifdef TBOX_ADV_AUTORETRACT
+    if(in_advanced_autoretract_mode()){
+      retracted[active_extruder] = next_retracted_state;   
+    }else
+  #endif
+  {
+    retracted.set(active_extruder, retracting);           
+  }
   // If swap retract/recover update the retracted_swap flag too
   #if HAS_MULTI_EXTRUDER
     if (swapping) retracted_swap.set(active_extruder, retracting);
   #endif
 
+  #ifdef TBOX_ADV_AUTORETRACT
+    SERIAL_ECHOLNPGM("<< FWRetract::retract() retracting: ", AS_DIGIT(retracting));
+    M209_report();
+  #endif
   /* // debugging
-    SERIAL_ECHOLNPGM("retracting ", AS_DIGIT(retracting));
+        SERIAL_ECHOLNPGM("retracting ", AS_DIGIT(retracting));
     SERIAL_ECHOLNPGM("swapping ", AS_DIGIT(swapping));
     SERIAL_ECHOLNPGM("active_extruder ", active_extruder);
     EXTRUDER_LOOP() {
@@ -194,6 +313,96 @@ void FWRetract::retract(const bool retracting E_OPTARG(bool swapping/*=false*/))
   //*/
 }
 
+#ifdef TBOX_ADV_AUTORETRACT
+
+/**
+ * Toybox Alex:
+ * Limit emoves in both directions.
+ * 
+ * Only called in advanced autoretract mode.
+ * 
+ * Called from G0/G1 for all E-only moves, and from G0/G1/G2/G3 for all backwards E moves.
+ * 
+ * Fucks with current_position.e to fake out the planner and make it think it's in a 
+ * different position so it moves a different amount. The actual move will still happen at
+ * the same time as everything else from G0/G1/G2/G3, so the caller will still have to
+ * go through that procedure.
+ * 
+ * Updates the retracted_amnt and the retracted[active_extruder] flag to keep track of the
+ * current state.
+ */
+void FWRetract::clamp_move(){
+    // SERIAL_ECHOLNPGM(">> FWRetract::clamp_move()   retracted_amnt: ", retracted_amnt, 
+    //   " current_retract[active_extruder]: ", current_retract[active_extruder], 
+    //   " retracted[active_extruder]: ", AS_DIGIT(retracted[active_extruder]));
+    if(!in_advanced_autoretract_mode()){
+      SERIAL_ECHOLNPGM("ERROR: clamp_move() called but not in advanced autoretract mode -----------------------------------");
+      return;
+    }
+    const float e_retraction = current_position.e - destination.e;
+
+    // SERIAL_ECHOLNPGM("clamp_move() e_retraction: ", e_retraction);
+    const float start_retracted_amnt = retracted_amnt;
+    float delta_retracted_amnt = e_retraction;
+
+    // Toybox Alex: retracted_amnt might be greater than TBOX_ADV_AUTORETRACT_MAX_PERMITED_RETRACT_LENGTH 
+    // if there were moves when we were not in advanced autoretract mode. retracted_amnt should never be 
+    // less than zero though. 
+    if(retracted_amnt >= TBOX_ADV_AUTORETRACT_MAX_PERMITED_RETRACT_LENGTH && e_retraction > 0.0f){
+        SERIAL_ECHOLNPGM("clamp_move() retracting but already beyond max permitted. ignoring.");
+        delta_retracted_amnt = 0.0f;
+    } else {
+      retracted_amnt = constrain(retracted_amnt + e_retraction, 0.0f, TBOX_ADV_AUTORETRACT_MAX_PERMITED_RETRACT_LENGTH);
+      delta_retracted_amnt = retracted_amnt - start_retracted_amnt;
+    }
+    const float amnt_reduced = e_retraction - delta_retracted_amnt;
+
+    // SERIAL_ECHOLNPGM("clamp_move() start_retracted_amnt: ", start_retracted_amnt, " retracted_amnt: ", retracted_amnt, " delta_retracted_amnt: ", delta_retracted_amnt, " amnt_reduced: ", amnt_reduced);
+
+    current_position.e -= amnt_reduced; // Hide a G1-based retract from calculations
+    sync_plan_position_e();             // AND from the planner
+
+    if(retracted_amnt < 0.00001f && retracted_amnt > -0.00001f){
+      retracted_amnt = 0.0f; // rounding error fix
+    }
+
+    // SERIAL_ECHOLNPGM("<< FWRetract::clamp_move()   retracted_amnt: ", retracted_amnt, 
+    //   " current_retract[active_extruder]: ", current_retract[active_extruder], 
+    //   " retracted[active_extruder]: ", AS_DIGIT(retracted[active_extruder]));
+}
+
+/**
+ * Toybox Alex:
+ * Track the change in retracted_amnt.
+ * If we're in advanced autoretract mode, update the retracted[active_extruder] flag.
+ * 
+ * Called for all E moves that weren't handled by another FWRetract function.
+ * 
+ */
+void FWRetract::track_change(const float e_move){
+
+    // SERIAL_ECHOLNPGM(">> FWRetract::track_change() e_move: ", e_move,
+    //   " retracted_amnt: ", retracted_amnt, 
+    //   " current_retract[active_extruder]: ", current_retract[active_extruder], 
+    //   " retracted[active_extruder]: ", AS_DIGIT(retracted[active_extruder]));
+
+  retracted_amnt = constrain(retracted_amnt - e_move, 0.0f, TBOX_ADV_AUTORETRACT_MAX_AMNT_CONSIDERED_RETRACTED);
+
+  if(retracted_amnt < 0.0001f && retracted_amnt > -0.0001f){
+    retracted_amnt = 0.0f; // rounding error fix
+  }
+  if(in_advanced_autoretract_mode()){
+    retracted[active_extruder] = retracted_amnt != 0.0f;    
+  }
+
+  // SERIAL_ECHOLNPGM("<< FWRetract::track_change() e_move: ", e_move,
+  // " retracted_amnt: ", retracted_amnt, 
+  // " current_retract[active_extruder]: ", current_retract[active_extruder], 
+  // " retracted[active_extruder]: ", AS_DIGIT(retracted[active_extruder]));
+}
+
+
+#endif
 /**
  * M207: Set firmware retraction values
  *
@@ -256,14 +465,68 @@ void FWRetract::M208_report() {
    */
   void FWRetract::M209() {
     if (!parser.seen('S')) return M209_report();
-    if (MIN_AUTORETRACT <= MAX_AUTORETRACT)
-      enable_autoretract(parser.value_bool());
+    if (MIN_AUTORETRACT <= MAX_AUTORETRACT){
+      #ifdef TBOX_ADV_AUTORETRACT
+        AutoRetractMode mode;
+        if(!parser.seenval('S')){
+          mode = AutoRetractMode::NORMAL;
+        }else{
+          uint8_t mode_byte = parser.value_byte();
+          if(mode_byte >= static_cast<uint8_t>(AutoRetractMode::NUM_MODES)){
+            SERIAL_ECHOLNPGM("Invalid autoretract mode ", mode_byte);
+            return M209_report();
+          }
+          mode = static_cast<AutoRetractMode>(mode_byte);
+        }
+        set_autoretract_mode(mode);
+      #else
+        enable_autoretract(parser.value_bool());
+      #endif
+    }   
   }
+
+  #ifdef TBOX_ADV_AUTORETRACT
+  void FWRetract::set_autoretract_mode(const AutoRetractMode new_mode) {
+    autoretract_mode = new_mode;
+    switch (new_mode) {
+      case AutoRetractMode::OFF:
+        autoretract_enabled = false;
+        SERIAL_ECHOLNPGM("Autoretract disabled");
+        break;
+      case AutoRetractMode::NORMAL:
+        autoretract_enabled = true;
+        SERIAL_ECHOLNPGM("Basic autoretract enabled");
+        break;
+      case AutoRetractMode::ADVANCED:
+        retracted[active_extruder] = retracted_amnt != 0.0f;
+        autoretract_enabled = true;
+        SERIAL_ECHOLNPGM("Advanced autoretract enabled");
+        break;
+      default:
+        SERIAL_ECHOLNPGM("Invalid autoretract mode ", static_cast<uint8_t>(new_mode));
+    }
+  }
+  #endif
+
 
   void FWRetract::M209_report() {
     TERN_(MARLIN_SMALL_BUILD, return);
-
+#ifdef TBOX_ADV_AUTORETRACT
+    SERIAL_ECHOLNPGM("  M209 mode ", static_cast<uint8_t>(autoretract_mode));
+    SERIAL_ECHOLNPGM("  retracted_amnt: ", retracted_amnt);
+    SERIAL_ECHOLNPGM("  current_retract[active_extruder] (planner modifier): ", current_retract[active_extruder]);
+    SERIAL_ECHOLNPGM("  retracted[active_extruder]: ", AS_DIGIT(retracted[active_extruder]));
+    SERIAL_ECHOLNPGM("  planner.get_axis_position_mm(E_AXIS) (has modifiers applied): ", planner.get_axis_position_mm(E_AXIS));
+    xyze_pos_t planner_pos;
+    planner_pos.reset();
+    planner_pos.e = planner.get_axis_position_mm(E_AXIS);
+    planner.unapply_modifiers(planner_pos);
+    SERIAL_ECHOLNPGM("  planner_pos.e (modifiers unapplied): ", planner_pos.e);
+    SERIAL_ECHOLNPGM("  current_position.e: ", current_position.e);
+    SERIAL_ECHOLNPGM("  destination.e: ", destination.e);
+#else
     SERIAL_ECHOLNPGM("  M209 S", AS_DIGIT(autoretract_enabled));
+#endif
   }
 
 #endif // FWRETRACT_AUTORETRACT

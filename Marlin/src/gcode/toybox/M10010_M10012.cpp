@@ -1,0 +1,30 @@
+#ifdef ENV_ALPHA4
+
+#include "../gcode.h"
+#include  "../../HAL/HC32/cs1237.h"
+//e.g:"M10010 S100 \n"     set threshold 0.1mV
+void GcodeSuite::M10010()  //set threshold  
+{
+    if (parser.seenval('S')) {
+        const int16_t x = parser.value_int();
+        cs1237.set_threshold((int32_t)x);
+    } else {
+        SERIAL_ECHOLNPGM("cs1237 current threshold: ", cs1237.get_threshold());
+    }
+}
+//e.g: "M10011\n"
+void GcodeSuite::M10011()
+{
+    if(parser.seen('R')){
+        SERIAL_ECHOLNPGM("cs1237 current value: ", cs1237.get_raw_data()); 
+    }else{
+        SERIAL_ECHOLNPGM("cs1237 current value: ", cs1237.get_current_value()); 
+    }
+}
+
+void GcodeSuite::M10012()
+{
+
+   SERIAL_ECHOLNPGM("cs1237 zero value: ",cs1237.cs_zero_val);
+}
+#endif

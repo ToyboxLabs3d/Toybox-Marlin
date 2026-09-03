@@ -1163,6 +1163,15 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
       #endif
       case 10004: break;                                        // M10004 do nothing, handled by emergency parser         
       case 10005: break;                                        // M10005 do nothing, handled by emergency parser
+      #ifdef ENV_ALPHA4
+      case 10010: M10010(); break;   // 设置阈值 (Set threshold)
+      case 10011: M10011(); break;  // 查询当前压力值 (Query current pressure value)
+      case 10012: M10012(); break;  // 查询零值 (Query zero value)
+      #endif
+      #ifdef TOYBOX_PROBE_FUDGING
+      case 10013: M10013(); break;  // set probing z-offset fudge factor
+      #endif
+      
       default: parser.unknown_command_warning(); break;
     }
     break;
@@ -1187,7 +1196,7 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
   if (!no_ok
   #if ENABLED(TOYBOX_FAST_CMDS)
     // Toybox Alex: If we're in the middle of a fast cancel, then we just cleared the queue.
-    // This means the current command is no longer valid. If we try to send and "ok" it will
+    // This means the current command is no longer valid. If we try to send an "ok" it will
     // just be the wrong line number.
     && !stop_running_move
   #endif

@@ -77,6 +77,10 @@
   #include "../feature/bedlevel/bdl/bdl.h"
 #endif
 
+#ifdef ENV_ALPHA4
+#include "../HAL/HC32/cs1237.h"
+#endif
+
 // Relative Mode. Enable with G91, disable with G90.
 bool relative_mode; // = false
 
@@ -111,7 +115,7 @@ xyze_pos_t destination; // {0}
 #if SAVED_POSITIONS
   Flags<SAVED_POSITIONS> did_save_position;
   xyze_pos_t stored_position[SAVED_POSITIONS];
-
+  float stored_planner_e_position_mm[SAVED_POSITIONS];
   relative_t stored_axis_relative[SAVED_POSITIONS];
   feedRate_t stored_feedrate[SAVED_POSITIONS];
   uint8_t stored_fanspeed[SAVED_POSITIONS][FAN_COUNT];
@@ -2794,6 +2798,12 @@ void prepare_line_to_destination() {
 
         // Tell the Bed Distance Sensor we're Z homing
         TERN_(BD_SENSOR, bdl.config_state = BDS_HOMING_Z);
+// seems like this doesn't do anything.
+#ifdef ENV_ALPHA4
+        //CS1237 initial values
+        cs1237_set_zero(&cs1237);
+        cs1237.homing_flg = 1;
+#endif
       }
     #endif
 

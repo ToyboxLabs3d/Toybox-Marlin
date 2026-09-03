@@ -443,6 +443,21 @@ void GcodeSuite::G2_G3(const bool clockwise) {
 
   get_destination_from_command();   // Get X Y [Z[I[J[K...]]]] [E] F (and set cutter power)
 
+  #ifdef TBOX_ADV_AUTORETRACT
+
+    const float echange = destination.e - current_position.e;
+    const bool is_retract = echange < 0.0f;
+    const bool is_emove = echange != 0.0f;
+
+    if(is_emove){
+      if(is_retract && fwretract.in_advanced_autoretract_mode() && WITHIN(ABS(echange), MIN_AUTORETRACT, MAX_AUTORETRACT)){
+        fwretract.clamp_move();
+      } else {
+        fwretract.track_change(echange);
+      }
+    }
+  #endif
+
   TERN_(SF_ARC_FIX, relative_mode = relative_mode_backup);
 
   ab_float_t arc_offset = { 0, 0 };
